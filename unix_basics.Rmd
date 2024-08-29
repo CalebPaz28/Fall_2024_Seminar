@@ -1,0 +1,76 @@
+---
+title: "Unix Basics"
+author: "Paslay"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This content was adopted from Dr. Toomey.
+
+## Where am I?
+`pwd` - print working directory
+this will return your current location
+
+
+## What is here?
+`ls` - prints a list of files and folders in the current directory
+`ls <path to folder>` - will list files and folders in whatever you list in the “path to folder”.
+
+
+## Useful options with ls
+`ls -a` shows all including hidden files
+`ls -l` long format with lots of detail
+`ls -R` recursively list subdirectories (careful!)
+`ls -1` list one item per line (useful for programming)
+`ls -G` list files and directories in color
+`ls -F` use symbols for different file types
+no symbol = file
+/ = a directory
+* = an executable shell script
+
+We can create a list of files by using `ls > my.list.txt` and this would create a list of the file names and save it to a text file.
+
+EXERCISE: Open shell, do a listing with ls -GF
+
+## The cd command
+use this to change directories
+most basic form `cd <directory name>` only works for directories that are “below” your current directory (subdirectories)
+
+## short-cuts with cd
+shell opens in your home directory
+`cd ~` always returns you to home in one jump
+`cd` also takes you home with one less symbol to type
+/ takes you to top level root of your computer (rarely needed)
+`cd ..` moves you up to the next highest directory
+`cd ../..` moves you up two directories
+
+##Creating files and directories
+
+`touch` is used to create empty files
+`touch path/to/<filename>` creates a file in the specified directory
+`mkdir` makes a directory within the current directory
+
+
+## Removing a file or a directory
+
+Be careful, these actions cannot be undon. There is no “trash” folder in the shell
+`rm <filename>` removes a file
+`rmdir <directoryname>` removes a directory (directory must be empty)
+`rm -r <directoryname>` removes directory and recursively removes all of its subdirectories and files!
+
+## Copying or moving files, folders, or directories
+
+`cp sourceFile destinationFile` copies file, folder or directory from source location to somewhere else
+`mv sourceFile destinationFile` moves file, folder or directory from source location to somewhere else
+
+## Renaming or save as… files, folders, or directories
+`mv oldName newName` in same location renames file
+`cp oldName newName` in same location saves a copy of the file to a new name
+
+## These commands will recognize wildcareds
+`rm *.pdf` removes all .pdf files
+`rm F*.pdf` removes all .pdf files that begin with the letter F
