@@ -18,19 +18,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 [Unix Basics](class_notes/unix_basics.html)
 
-
 [Working with OSCER](class_notes/working_with_oscer.html)
-
 
 [Using git](class_notes/using_git.html)
 
+------------------------------------------------------------------------
 
+> This is block wording
 
+| Species       | Awesomeness |
+|:--------------|:-----------:|
+| House Sparrow |   Medium    |
+| Tree Sparrow  |    High     |
 
+------------------------------------------------------------------------
 
-
-
-
-
-
-
+:grinning:
