@@ -16,6 +16,8 @@ There are multiple "login nodes" schooner1-3. One of these will be automatically
 ```
 ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu
 ```
+My personal account ID biol726310
+
 into you terminal application. This will then prompt you for your password. *note your password will be hidden from the screen and nothing will appear at the cursor when you enter your password
 
 There is also a specific node to use for large data transfers - `dtn2.oscer.ou.edu`. You should use this if you are uploading or downloading large amounts of data (~>2 GB).

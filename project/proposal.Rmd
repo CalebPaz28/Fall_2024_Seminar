@@ -1,0 +1,38 @@
+---
+title: "Project Proposal"
+author: "Paslay"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction - study species/system and relevant background
+
+In studying plant viruses, there have been numerous studies whereby researchers investigate available HTS data for the presence of known or novel viruses. Characterization of these viruses is critical for future disease prevention and rapid development of diagnostic methods.
+
+According to NCBI, there is a large amount of data on roses (both RNA and DNA). There may be many viruses that are novel that have not yet been characterized given the current study was focusing on something other than virus discovery and characterization.
+
+I personally think it could be very useful to develop a pipeline/script for downloading HTS data and using other tools to create a system that can conduct trimming/QC, de novo assembly, reference mapping, blasting of contigs, and output a results table as the final product.
+
+
+## Research question(s)
+
+1. Are there viruses that are capable of infecting roses that have not yet been reported, but have been sequenced "serendipitously" by HTS methods?
+
+2. Are there novel viruses that have not yet been characterized but were sequenced as a "byproduct" of some other experiment?
+
+## Methods - general description of the analysis approaches you will use.
+
+
+
+## Predictions/expected outcomes
+
+
+
+
+
+
+

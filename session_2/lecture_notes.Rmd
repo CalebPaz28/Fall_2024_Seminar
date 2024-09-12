@@ -1,0 +1,108 @@
+## Notes from lecture
+
+Genome: complete set of genetic information (nucleur genome, mitocondrial genome)
+
+Composed of DNA and RNA (nucleic acids)
+
+4 bases: Adenine, cytosine, guanine, thymine
+
+Nucleotides are assembled into chains (polymers) that are short to long. Linked 5' to 3' through the formation of phosphodiester bonds.
+
+5' refers to carbon 5 or 5' carbon and the hydroxl group refers to the 3' carbon.
+
+DNA as a double helix (two copies complementary to one another)
+- Seperate strands held together by hydrogen bonds
+- GC bonds are stronger because they have 3 hydrogen bond interaction
+- Antiparellel strands of DNA
+- Each strands serves as a template for replication
+- Structure of DNA implied the mode of replication
+
+We can take advantage of DNA replication in vitro
+
+How many genomes are we carrying?
+
+- Eurkaryotes carry a 1) nuclear (bi-parental inheritance) 2) mitocondrial (maternally inherited and prokaryotic like)
+
+Plants have 3 genomes: 1) nuclear 2) mitocondrial 3) chloroplast (maternally-linked)
+
+Prokaryotes are also complex because they have chromosome (essential genes), chromid (essential genomes), and plasmid (nonessential genomes)
+
+How do our genomes encode information?
+
+Genes: portions of the genome that encode instructions to assemble protein
+Genome -> transcribed to RNA -> translation by ribosomes into proteins (central dogma)
+
+Transcription (DNA to mRNA)
+RNA differs in that it has a hydroxl group on carbon 2. Additionally, a different nitrogenous base is used such as uracil
+
+Introns- do not code for protein
+Exons- are removed and when joined are considered "mature RNA"
+
+Types of RNAs
+- Coding RNAs (mRNA) - 4%
+- Noncoding RNAs (ribosomal, transfer, sncRNA, incRNA) - 96%
+
+
+When sequencing for mature RNA, we can target poly-A tail knowing that 
+
+
+How do genomes encode information?
+- Transcripts are huge and proteins are small
+- rRNA is not translated- it is a structural and functional element of the ribosome
+- tRNA (not translated) but acts as an adapter for the process of translation
+- Other noncoding RNA's are not well understood but some roles may include regulating gene expression at some level and are related to cellular physiology
+
+Regulatory elements (cis-regulatory elements)
+- Transcription factors (promoters, terminators, enhancers, repressors, insulators)
+- Polymerases
+- Is this system an example of irreducible complexity?
+
+
+Genome sequencing approaches
+Read - a single sequence from one fragment of a sequecning library
+Library - A collection of DNA fragments that have been prepared for sequencing
+Coverage - Number of reads spanning a region of the genome
+
+
+Fred Sanger (1918-2013)
+1958 - Protein sequencing (enzyme that degrade certain proteins) to know the sequencing of insulin
+
+1980 - DNA sequencing (chain termination sequencing)
+- dideoxynucleotide that is called a "terminator" with fluroesence
+- Read length: 700-1000bp
+- Throughput 96 reads per run
+- Error: 1/100,000 bases
+- Cost: $1 per read
+
+Short-read sequencing (Illumina)
+- Fragmentation, adaptor trimming
+- Bind to a flow cell (the adaptor binds to the oligos on the flow cell)
+- Bridging (the other end binds to the flow cell and the sequence is replicated) PCR
+- Add nucleotides and a snapshot is taken at each step (fluroesence)
+- Fragments read from either end coming from the adaptors
+  - Single read
+  - paired reads
+  
+Read length: 100-300bp
+Throughput: 25 billion reads per run
+error rate: 1/100 - 1/1,000 bases
+Cost: $0.00000005 per read
+
+
+Long-read sequencing (MinION or PacBio)
+Rad length: 10-20kb
+Throughput: up to 4 million reads/run
+Error: 1/1,000 bases
+Cost: $0.005 per read
+
+
+Oxford nanopore
+Read length: > 1Mbs
+Throughput: 7-12 million reads
+Error rate: 1/10 bases
+Cost: $0.005 per read
+
+
+Sequencing Data (Fastq file)
+
+Quality info - Phred scores (metrics produced by assessing the signal from the sequencing instrument)

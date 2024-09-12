@@ -1,0 +1,77 @@
+
+### **Class Notes**
+
+[Lecture Notes](lecture_notes.html)
+
+[Initalizing Genome Adventure](genome_adventure.html)
+
+### **Scripts**
+
+### **Downloading Data from Online Sources to our Local Environment**
+
+1. Login to OSCER: `ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu`
+2. initate [mamba]: `1) module load Mamba 2) mamba init`
+3. Then log out, and log back into OSCER (required to load)
+4. `base` near your name means the conda base has been loaded properly.
+5. Activate the class environment: `mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics`
+6. Terminal beginning with should be showing `(BIOL7263_Genomics)`. This means conda `BIOL7263_Genomics` environment has been initialized successfully.
+7. We will download the data to the scratch folder: `1) cd scatch/[your user name] 2) mkdir BIOL7263_Genomics 3) cd BIOL7263_Genomics 4) mkdir -p sequencing_data/ecoli 5) cd sequencing_data/ecoli`
+8. Download the raw sequences: 
+`1) wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR857/SRR857279/SRR857279_1.fastq.gz` 
+`2) wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR857/SRR857279/SRR857279_2.fastq.gz`
+9. `chmod 444 *.gz` will make it to wear we cannot destroy the raw data accidentially.
+10. Getting Illumina data for Pseudomonas
+`wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_1.fastq.gz`
+`wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_2.fastq.gz`
+11. Get the PacBio data
+`wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/006/SRR1042836/SRR1042836_subreads.fastq.gz`
+12. `chmod 444 *.gz`: Making files read only
+13. Download a reference genome: [*Escherichia coli* str. K-12 substr. MG1655](https://www.ncbi.nlm.nih.gov/genome/167?genome_assembly_id=161521)
+14. Downloading the reference data with the links: 
+`wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz`
+`wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gff.gz`
+15. Unzipping the files: `gunzip ecoli/*.gz`
+16. Changing to read-only
+`chmod -R 444 ecoli/*.fna`
+`chmod -R 444 ecoli/*.gff`
+17. Downloading PFam-A database of Hidden Markov Models (HMMS) and an Active Site database from https://pfam.xfam.org/
+`wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz`
+`wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz`
+`wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz`
+18. Uncompress the files
+`gunzip *.gz`
+
+## **Evaluating the Quality of Illumina Data**
+
+1. Changing the names of the files: 
+`ln -s SRR857279_1.fastq.gz read_1.fastq.gz`
+`ln -s SRR857279_2.fastq.gz read_2.fastq.gz`
+2. To view the first few headers we can use the 'zcat' command (this is similar to 'cat' but works with zipped files). We can also use `head` and `tail` to look at the data.
+`zcat read_1.fastq.gz | head | grep @SRR`
+`zcat read_2.fastq.gz | head | grep @SRR`
+`zcat read_1.fastq.gz | tail | grep @SRR`
+`zcat read_2.fastq.gz | tail | grep @SRR`
+3. Check that there is an identical number of reads in each file
+`zcat read_1.fastq.gz | grep @SRR | wc –l`
+`zcat read_2.fastq.gz | grep @SRR | wc –l`
+4. The 'fastqc' program performs a number of tests which determines whether a green tick (pass) :heavy_check_mark:, exclamation mark (warning) :exclamation:, or a red cross (fail) :x: is displayed. However, it is important to realise that fastqc has no knowledge of what your specific library is or should look like. All of its tests are based on a completely random library with 50% GC content. Therefore, if you have a sample which does not match these assumptions, it may 'fail' the library. We will submit this action as a job through using SLURM. First we will write a shell script (.sh file) will our commands and then an sbatch file to submit that script. Now we create a .sh file with the following commands: the simplest way to do this is to create the file offline in an editor like [Notepad++](https://notepad-plus-plus.org/) and then upload to OSCER with [scp or winSCP](https://www.ou.edu/oscer/support/file_transfer). I created a file called ***ecoli_fastqc.sh*** that contains the following
+
+`fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_1.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/`
+`fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_2.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/`
+
+5. create an sbatch file that the SLURM job manager will read to queue and start our job. I created a file called ***ecoli_fastqc.sbatch*** that contained the following:
+```bash
+#!/bin/bash
+#
+#SBATCH --partition=normal
+#SBATCH --ntasks=1
+#SBATCH --mem 8G
+#SBATCH --output=ecoli_fastqc_%J_stdout.txt
+#SBATCH --error=ecoli_fastqc_%J_stderr.txt
+#SBATCH --job-name=ecoli_fastqc
+# 
+```
+6. Submit the job with the following command:
+`sbatch home/.../BIOL7263_Genomics/scripts/fastqc/ecoli_fastqc.sbatch`
+
+

@@ -1,0 +1,18 @@
+
+## **What we were able to do on 8/29/24**
+
+
+### Class Notes
+
+[Unix Basics](unix_basics.html)
+
+[Working with OSCER](working_with_oscer.html)
+
+[Using git](using_git.html)
+
+
+### Scripts
+
+[test.sbatch](https://github.com/CalebPaz28/Fall_2024_Seminar/blob/main/scripts/test.sbatch)
+
+[test.sh](https://github.com/CalebPaz28/Fall_2024_Seminar/blob/main/scripts/test.sh)
