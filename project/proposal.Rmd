@@ -26,11 +26,16 @@ I personally think it could be very useful to develop a pipeline/script for down
 
 ## Methods - general description of the analysis approaches you will use.
 
-
+1. Collect SRA data (transcriptomic) for roses
+2. Quality check and trimming 
+3. Mapping raw reads to reference genome (rose genome)
+4. Collecting unmapped reads
+5. De novo assembly of unmapped reads
+6. BLAST analysis to find plant virus contigs
 
 ## Predictions/expected outcomes
 
-
+I am hopeful to develop a useful tool for analyzing our own HTS data. In addition, I am hopeful to use this tool to "screen" available HTS data for the presence of plant viruses in roses. In practice, this could be used for any plant host to determine if there are novel or unreported viruses from a given region of the world. Ideally, it would be useful to create a pipeline where we can simply input the raw fastq files and output the results from the BLAST search.
 
 
 

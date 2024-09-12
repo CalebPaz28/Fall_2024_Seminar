@@ -3,9 +3,12 @@
 
 [Lecture Notes](lecture_notes.html)
 
-[Initalizing Genome Adventure](genome_adventure.html)
+### Scripts
 
-### **Scripts**
+[Ecoli sbatch](scripts/ecoli_fastqc.sbatch)
+
+[Ecoli sh](scripts/ecoli_fastqc.sh)
+
 
 ### **Downloading Data from Online Sources to our Local Environment**
 

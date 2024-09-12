@@ -352,20 +352,18 @@ display: none;
 </div>
 
 
-<div id="what-we-were-able-to-do-on-_______" class="section level2">
-<h2><strong>What we were able to do on _______</strong></h2>
 <div id="class-notes" class="section level3">
-<h3>Class Notes</h3>
+<h3><strong>Class Notes</strong></h3>
 <p><a href="lecture_notes.html">Lecture Notes</a></p>
-<p><a href="genome_adventure.html">Initalizing Genome Adventure</a></p>
 </div>
 <div id="scripts" class="section level3">
 <h3>Scripts</h3>
-<p><a href></a></p>
-<p><a href></a></p>
+<p><a href="scripts/ecoli_fastqc.sbatch">Ecoli sbatch</a></p>
+<p><a href="scripts/ecoli_fastqc.sh">Ecoli sh</a></p>
 </div>
-<div id="walkthrough-for-today" class="section level3">
-<h3>Walkthrough for today</h3>
+<div id="downloading-data-from-online-sources-to-our-local-environment" class="section level3">
+<h3><strong>Downloading Data from Online Sources to our Local
+Environment</strong></h3>
 <ol style="list-style-type: decimal">
 <li>Login to OSCER:
 <code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></li>
@@ -409,6 +407,60 @@ Active Site database from <a href="https://pfam.xfam.org/" class="uri">https://p
 <li>Uncompress the files <code>gunzip *.gz</code></li>
 </ol>
 </div>
+<div id="evaluating-the-quality-of-illumina-data" class="section level2">
+<h2><strong>Evaluating the Quality of Illumina Data</strong></h2>
+<ol style="list-style-type: decimal">
+<li>Changing the names of the files:
+<code>ln -s SRR857279_1.fastq.gz read_1.fastq.gz</code>
+<code>ln -s SRR857279_2.fastq.gz read_2.fastq.gz</code></li>
+<li>To view the first few headers we can use the ‘zcat’ command (this is
+similar to ‘cat’ but works with zipped files). We can also use
+<code>head</code> and <code>tail</code> to look at the data.
+<code>zcat read_1.fastq.gz | head | grep @SRR</code>
+<code>zcat read_2.fastq.gz | head | grep @SRR</code>
+<code>zcat read_1.fastq.gz | tail | grep @SRR</code>
+<code>zcat read_2.fastq.gz | tail | grep @SRR</code></li>
+<li>Check that there is an identical number of reads in each file
+<code>zcat read_1.fastq.gz | grep @SRR | wc –l</code>
+<code>zcat read_2.fastq.gz | grep @SRR | wc –l</code></li>
+<li>The ‘fastqc’ program performs a number of tests which determines
+whether a green tick (pass) :heavy_check_mark:, exclamation mark
+(warning) :exclamation:, or a red cross (fail) :x: is displayed.
+However, it is important to realise that fastqc has no knowledge of what
+your specific library is or should look like. All of its tests are based
+on a completely random library with 50% GC content. Therefore, if you
+have a sample which does not match these assumptions, it may ‘fail’ the
+library. We will submit this action as a job through using SLURM. First
+we will write a shell script (.sh file) will our commands and then an
+sbatch file to submit that script. Now we create a .sh file with the
+following commands: the simplest way to do this is to create the file
+offline in an editor like <a href="https://notepad-plus-plus.org/">Notepad++</a> and then upload to
+OSCER with <a href="https://www.ou.edu/oscer/support/file_transfer">scp
+or winSCP</a>. I created a file called
+<strong><em>ecoli_fastqc.sh</em></strong> that contains the
+following</li>
+</ol>
+<p><code>fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_1.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/</code>
+<code>fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_2.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/</code></p>
+<ol start="5" style="list-style-type: decimal">
+<li>create an sbatch file that the SLURM job manager will read to queue
+and start our job. I created a file called
+<strong><em>ecoli_fastqc.sbatch</em></strong> that contained the
+following:</li>
+</ol>
+<pre class="bash"><code>#!/bin/bash
+#
+#SBATCH --partition=normal
+#SBATCH --ntasks=1
+#SBATCH --mem 8G
+#SBATCH --output=ecoli_fastqc_%J_stdout.txt
+#SBATCH --error=ecoli_fastqc_%J_stderr.txt
+#SBATCH --job-name=ecoli_fastqc
+# </code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>Submit the job with the following command:
+<code>sbatch home/.../BIOL7263_Genomics/scripts/fastqc/ecoli_fastqc.sbatch</code></li>
+</ol>
 </div>
 
 

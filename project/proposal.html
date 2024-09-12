@@ -9,9 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Paslay" />
 
+<meta name="date" content="2024-09-11" />
 
-<title>session_4.knit</title>
+<title>Project Proposal</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,27 +350,60 @@ display: none;
 
 
 
+<h1 class="title toc-ignore">Project Proposal</h1>
+<h4 class="author">Paslay</h4>
+<h4 class="date">2024-09-11</h4>
 
 </div>
 
 
-<div id="class-notes" class="section level3">
-<h3><strong>Class Notes</strong></h3>
-<p><a href="lecture_notes.html">Lecture Notes</a></p>
+<div id="introduction---study-speciessystem-and-relevant-background" class="section level2">
+<h2>Introduction - study species/system and relevant background</h2>
+<p>In studying plant viruses, there have been numerous studies whereby
+researchers investigate available HTS data for the presence of known or
+novel viruses. Characterization of these viruses is critical for future
+disease prevention and rapid development of diagnostic methods.</p>
+<p>According to NCBI, there is a large amount of data on roses (both RNA
+and DNA). There may be many viruses that are novel that have not yet
+been characterized given the current study was focusing on something
+other than virus discovery and characterization.</p>
+<p>I personally think it could be very useful to develop a
+pipeline/script for downloading HTS data and using other tools to create
+a system that can conduct trimming/QC, de novo assembly, reference
+mapping, blasting of contigs, and output a results table as the final
+product.</p>
 </div>
-<div id="scripts" class="section level3">
-<h3><strong>Scripts</strong></h3>
-<p><a href></a></p>
-</div>
-<div id="topic" class="section level3">
-<h3><strong>Topic</strong></h3>
+<div id="research-questions" class="section level2">
+<h2>Research question(s)</h2>
 <ol style="list-style-type: decimal">
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
+<li><p>Are there viruses that are capable of infecting roses that have
+not yet been reported, but have been sequenced “serendipitously” by HTS
+methods?</p></li>
+<li><p>Are there novel viruses that have not yet been characterized but
+were sequenced as a “byproduct” of some other experiment?</p></li>
 </ol>
+</div>
+<div id="methods---general-description-of-the-analysis-approaches-you-will-use." class="section level2">
+<h2>Methods - general description of the analysis approaches you will
+use.</h2>
+<ol style="list-style-type: decimal">
+<li>Collect SRA data (transcriptomic) for roses</li>
+<li>Quality check and trimming</li>
+<li>Mapping raw reads to reference genome (rose genome)</li>
+<li>Collecting unmapped reads</li>
+<li>De novo assembly of unmapped reads</li>
+<li>BLAST analysis to find plant virus contigs</li>
+</ol>
+</div>
+<div id="predictionsexpected-outcomes" class="section level2">
+<h2>Predictions/expected outcomes</h2>
+<p>I am hopeful to develop a useful tool for analyzing our own HTS data.
+In addition, I am hopeful to use this tool to “screen” available HTS
+data for the presence of plant viruses in roses. In practice, this could
+be used for any plant host to determine if there are novel or unreported
+viruses from a given region of the world. Ideally, it would be useful to
+create a pipeline where we can simply input the raw fastq files and
+output the results from the BLAST search.</p>
 </div>
 
 

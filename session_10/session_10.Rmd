@@ -1,18 +1,15 @@
 
-## **What we were able to do on _______**
+### **Class Notes**
 
+[Lecture Notes](lecture_notes.html)
 
-### Class Notes
-
-[]()
-
-[]()
+### **Scripts**
 
 []()
 
-
-### Scripts
-
-[]()
-
-[]()
+### **Topic**
+1. 
+2. 
+3. 
+4. 
+5. 
