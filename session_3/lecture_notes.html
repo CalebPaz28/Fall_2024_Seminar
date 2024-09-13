@@ -9,9 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Paslay" />
 
+<meta name="date" content="2024-09-12" />
 
-<title>session_2.knit</title>
+<title>lecture_notes</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,120 +350,178 @@ display: none;
 
 
 
+<h1 class="title toc-ignore">lecture_notes</h1>
+<h4 class="author">Paslay</h4>
+<h4 class="date">2024-09-12</h4>
 
 </div>
 
 
-<div id="class-notes" class="section level3">
-<h3><strong>Class Notes</strong></h3>
-<p><a href="lecture_notes.html">Lecture Notes</a></p>
+<div id="notes-from-9122024" class="section level1">
+<h1>Notes from 9/12/2024</h1>
+<div id="genome-alignment-and-assembly" class="section level2">
+<h2>Genome alignment and assembly</h2>
+<div id="alignment" class="section level3">
+<h3>Alignment</h3>
+<ul>
+<li><p>Why?</p>
+<ul>
+<li>Reveal evolutionary relationships</li>
+<li>Variant calling</li>
+<li>Classify organisms</li>
+<li>Gene expression</li>
+<li>Epigenetic changes</li>
+</ul></li>
+<li><p>Pairwise alignment Blast is a pairwise alignment tool. This
+maximizes the match and returns hits. We can do 1-1 or
+1-database.</p></li>
+<li><p>Multiple sequence alignment We can use ClustalOmega or align a
+number of sequences</p></li>
+<li><p>Aligning things to motifs</p></li>
+<li><p>What can we align? DNA vs. DNA RNA vs. RNA DNA vs. RNA</p></li>
+<li><p>Terminology Query: sequence to align Reference: thing were
+aligning too Homology: shared ancestry Similarity, identity:
+mathematical way to detect homology String: sequence</p></li>
+<li><p>Global vs. local alignment global: each base has to align in some
+way betweeen sequences local: picking regions to align (allowed to skip
+beginning and/or end of either sequence)</p></li>
+<li><p>We score alignments Penalize mismatches and gaps search possible
+alignments for the one that minimizes penalty (ex. mismatch = -1,
+deletion = -2, gap = -3)</p></li>
+</ul>
+<p>M = match X = mismatch I = insertion (gap in target sequence) D =
+deletion (gap in reference sequence)</p>
+<p><strong>Hamming distance</strong>: This does not take insertion or
+deletions into account but can quantify the number of changes from one
+sequence (A) to another sequence (B).</p>
+<p>How do we find the best alignment? This is based on the
+Smith-waterman algorithm (1981) - One problem is that this algorithm may
+result in equally good alignments (aligns with the same score) - It
+works well but is very computationally intensive. It requires n*m
+operations where <code>n</code> and <code>m</code> are sequence lengths.
+- BLAST uses a combination of seeds and the SW-alignment method (+1
+match, -2 mismatch, -0.5 for in/del)</p>
+<p>E-value: number of hits one can expect to see by chance on a database
+this size. Small values are better matches.</p>
+<p>BLAT is not BLAST 1) sequence vs genome (BLAT) instead of a sequence
+vs a database (BLAST) 2) only hits … 3) Faster than BLAST, integrated
+into UCSC genome browser</p>
+<p>Efficient alignment of millions of reads requires massive amounts of
+computation but the Burrows-Wheeler transform (BWT) can help: - invented
+in 1994 - Rearranges and sorts seq elements - Reduces computational cost
+- Core component of most commonly used aligners</p>
+<p>BWT -&gt; FM-Index -&gt; SW alignment</p>
+<p>Tools: - Bowtie2 - BWA-MEM - Minimap2 (good for longer reads)</p>
+<p>How to choose? - Actively maintained - Well documented - Commonly
+used in your field - Easy to install</p>
+<p>Alignment output - SAM: Sequence alignment map - BAM: Binary
+Alignment MAP - For each read: - Coordinates in the reference -
+Sequences - carried over from fastq format - Alignment details - CIGAR
+sring - Quality information - Carried over from fastq format</p>
 </div>
-<div id="scripts" class="section level3">
-<h3>Scripts</h3>
-<p><a href="scripts/ecoli_fastqc.sbatch">Ecoli sbatch</a></p>
-<p><a href="scripts/ecoli_fastqc.sh">Ecoli sh</a></p>
+<div id="flags" class="section level3">
+<h3>Flags</h3>
+<p><strong>Flags in the output file are very useful for selecting reads
+that aligned or that did not.</strong></p>
+<pre class="bash"><code>samtools view -f 4 file.sam &gt; unmapped.sam
+samtools view -F 4 file.sam &gt; mapped.sam</code></pre>
 </div>
-<div id="downloading-data-from-online-sources-to-our-local-environment" class="section level3">
-<h3><strong>Downloading Data from Online Sources to our Local
-Environment</strong></h3>
+<div id="cigar-strings" class="section level3">
+<h3>CIGAR Strings</h3>
+<p>M - Alignment match or mismatch = - Sequence match X - sequence
+mismatch I - Insertion to reference D - Deletion from reference S - soft
+clipping H - Hard clipping N - Skipped region</p>
+<p><strong>Insert size</strong>: Length of DNA fragment sequenced from
+both ends by paired-end sequencing</p>
+</div>
+<div id="bamsam-visualization" class="section level3">
+<h3>BAM/SAM Visualization</h3>
+<p>The most common tool is the IGV (integrative genome viewer)</p>
+</div>
+</div>
+<div id="genome-assembly" class="section level2">
+<h2>Genome assembly</h2>
+<ul>
+<li>Sequencing libraries consist of a million of small fragments of the
+genome</li>
+<li>How do we put these pieces back together?</li>
+</ul>
+<p>Extract DNA -&gt; fragment the DNA -&gt; add adapters -&gt; sequence
+by Illumina -&gt; put the puzzle back together</p>
+<p><strong>Coverage</strong>: Typically 30-60x coverage for short read
+assembly is desired</p>
 <ol style="list-style-type: decimal">
-<li>Login to OSCER:
-<code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></li>
-<li>initate [mamba]:
-<code>1) module load Mamba 2) mamba init</code></li>
-<li>Then log out, and log back into OSCER (required to load)</li>
-<li><code>base</code> near your name means the conda base has been
-loaded properly.</li>
-<li>Activate the class environment:
-<code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></li>
-<li>Terminal beginning with should be showing
-<code>(BIOL7263_Genomics)</code>. This means conda
-<code>BIOL7263_Genomics</code> environment has been initialized
-successfully.</li>
-<li>We will download the data to the scratch folder:
-<code>1) cd scatch/[your user name] 2) mkdir BIOL7263_Genomics 3) cd BIOL7263_Genomics 4) mkdir -p sequencing_data/ecoli 5) cd sequencing_data/ecoli</code></li>
-<li>Download the raw sequences:
-<code>1) wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR857/SRR857279/SRR857279_1.fastq.gz</code>
-<code>2) wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR857/SRR857279/SRR857279_2.fastq.gz</code></li>
-<li><code>chmod 444 *.gz</code> will make it to wear we cannot destroy
-the raw data accidentially.</li>
-<li>Getting Illumina data for Pseudomonas
-<code>wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_1.fastq.gz</code>
-<code>wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_2.fastq.gz</code></li>
-<li>Get the PacBio data
-<code>wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/006/SRR1042836/SRR1042836_subreads.fastq.gz</code></li>
-<li><code>chmod 444 *.gz</code>: Making files read only</li>
-<li>Download a reference genome: <a href="https://www.ncbi.nlm.nih.gov/genome/167?genome_assembly_id=161521"><em>Escherichia
-coli</em> str. K-12 substr. MG1655</a></li>
-<li>Downloading the reference data with the links:
-<code>wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz</code>
-<code>wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gff.gz</code></li>
-<li>Unzipping the files: <code>gunzip ecoli/*.gz</code></li>
-<li>Changing to read-only <code>chmod -R 444 ecoli/*.fna</code>
-<code>chmod -R 444 ecoli/*.gff</code></li>
-<li>Downloading PFam-A database of Hidden Markov Models (HMMS) and an
-Active Site database from <a href="https://pfam.xfam.org/" class="uri">https://pfam.xfam.org/</a>
-<code>wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz</code>
-<code>wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz</code>
-<code>wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz</code></li>
-<li>Uncompress the files <code>gunzip *.gz</code></li>
+<li><p>Find overlapping regions and put these together (assemble by
+longest overlap)</p></li>
+<li><p>accounting for other overlaps by creating a graph with the paths
+linking our fragments - Overlap Graph (classic approach) - Celera
+assembler (CA). This approach can work today with long reads from MinION
+or others</p></li>
+</ol>
+<p>Now, we can simplify this by breaking the reads into sub-strings
+(kmers) of fixed lengths - smaller than reads (k = 21-55) - If small
+enough, we can find all unique kmers in sequencing dataset - We still
+have the problem that there may be multiple overlaps or alternative
+paths</p>
+<p>Another alternative is to create an overlap graph where we have kmers
+and nodes. The nodes would be visted once. This is called hometerian
+path</p>
+<p>Eulerian path - de Bruijn graph: kmers are the edges and the overlaps
+are the nodes - visit every edge once - Computationally tracable - the
+graphs reduce redundancy - Takes distinct kmers - Most assemblers use
+this method - Limited by low sequencing depth and sequencing errors -
+Repeats lead to forking paths which result in the
+<strong>contigs</strong> - Limitation: repetitive sequences</p>
+<p>Chromosome level assembly requires scaffolding - link contigs with
+external reference, long reads, chromatin confirmation information
+(HiC)</p>
+<div id="chromosome-confirmation---hic" class="section level3">
+<h3>Chromosome confirmation - HiC</h3>
+<ul>
+<li>Intrachromosomal contact porbability is on average much higher than
+interchromosomal.</li>
+<li>Interaction probability rapidly decays with increasing genomic
+distance</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Cell or tissue sample</li>
+<li>Crosslink chromatin</li>
+<li>Fragment chromatin</li>
+<li>repair and biotinylate ends</li>
+<li>Ligate fragmented chromatin</li>
+<li>Shear DNA and pull down DNA</li>
+<li>Sequence with standard short-read seq</li>
 </ol>
 </div>
-<div id="evaluating-the-quality-of-illumina-data" class="section level2">
-<h2><strong>Evaluating the Quality of Illumina Data</strong></h2>
-<ol style="list-style-type: decimal">
-<li>Changing the names of the files:
-<code>ln -s SRR857279_1.fastq.gz read_1.fastq.gz</code>
-<code>ln -s SRR857279_2.fastq.gz read_2.fastq.gz</code></li>
-<li>To view the first few headers we can use the ‘zcat’ command (this is
-similar to ‘cat’ but works with zipped files). We can also use
-<code>head</code> and <code>tail</code> to look at the data.
-<code>zcat read_1.fastq.gz | head | grep @SRR</code>
-<code>zcat read_2.fastq.gz | head | grep @SRR</code>
-<code>zcat read_1.fastq.gz | tail | grep @SRR</code>
-<code>zcat read_2.fastq.gz | tail | grep @SRR</code></li>
-<li>Check that there is an identical number of reads in each file
-<code>zcat read_1.fastq.gz | grep @SRR | wc –l</code>
-<code>zcat read_2.fastq.gz | grep @SRR | wc –l</code></li>
-<li>The ‘fastqc’ program performs a number of tests which determines
-whether a green tick (pass) :heavy_check_mark:, exclamation mark
-(warning) :exclamation:, or a red cross (fail) :x: is displayed.
-However, it is important to realise that fastqc has no knowledge of what
-your specific library is or should look like. All of its tests are based
-on a completely random library with 50% GC content. Therefore, if you
-have a sample which does not match these assumptions, it may ‘fail’ the
-library. We will submit this action as a job through using SLURM. First
-we will write a shell script (.sh file) will our commands and then an
-sbatch file to submit that script. Now we create a .sh file with the
-following commands: the simplest way to do this is to create the file
-offline in an editor like <a href="https://notepad-plus-plus.org/">Notepad++</a> and then upload to
-OSCER with <a href="https://www.ou.edu/oscer/support/file_transfer">scp
-or winSCP</a>. I created a file called
-<strong><em>ecoli_fastqc.sh</em></strong> that contains the
-following</li>
-</ol>
-<p><code>fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_1.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/</code>
-<code>fastqc /scratch/.../BIOL7263_Genomics/sequencing_data/ecoli/read_2.fastq.gz -o /scratch/.../BIOL7263_Genomics/fastqc_output/</code></p>
-<ol start="5" style="list-style-type: decimal">
-<li>create an sbatch file that the SLURM job manager will read to queue
-and start our job. I created a file called
-<strong><em>ecoli_fastqc.sbatch</em></strong> that contained the
-following:</li>
-</ol>
-<pre class="bash"><code>#!/bin/bash
-#
-#SBATCH --partition=normal
-#SBATCH --ntasks=1
-#SBATCH --mem 8G
-#SBATCH --output=ecoli_fastqc_%J_stdout.txt
-#SBATCH --error=ecoli_fastqc_%J_stderr.txt
-#SBATCH --job-name=ecoli_fastqc
-# </code></pre>
-<ol start="6" style="list-style-type: decimal">
-<li>Submit the job with the following command:
-<code>sbatch home/.../BIOL7263_Genomics/scripts/fastqc/ecoli_fastqc.sbatch</code></li>
-</ol>
-<p><a href="read_1_fastqc.html">Read 1 output file</a> <a href="read_2_fastqc.html">Read 2 output file</a></p>
+<div id="haploid-assembly" class="section level3">
+<h3>Haploid assembly</h3>
+<ul>
+<li>Having two alleles on an organism makes assembly challenging</li>
+<li>Haplotype phasing: requires long-reads</li>
+</ul>
+</div>
+<div id="popular-assemblers" class="section level3">
+<h3>Popular assemblers</h3>
+<p>SPAdes: - Designed to assemble megabase-sized genomes - Multiple kmer
+de Bruijn graphs from short reads - Can use long reads to resolve
+repeats</p>
+<p>Hifiasm assembler: - Build an overlap graph from HiFi reads -
+Generate both haploid and diploid assemblies - Can use very long reads
+to solve repeats - Requires HiFi reads at a minimum</p>
+<p>Unicycler: - Build an overlap graph from long reads - Polish the
+assembly - Also has short-read options</p>
+<ul>
+<li>How?</li>
+<li>Limitations and Bias</li>
+</ul>
+</div>
+<div id="assembly" class="section level3">
+<h3>Assembly</h3>
+<ul>
+<li>What and why?</li>
+</ul>
+</div>
+</div>
 </div>
 
 

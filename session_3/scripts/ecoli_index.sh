@@ -1,0 +1,1 @@
+bwa index /scratch/biol726310/BIOL7263_Genomics/reference_sequences/ecoli/GCF_000005845.2_ASM584v2_genomic.fna -p /scratch/biol726310/BIOL7263_Genomics/reference_sequences/ecoli/GCF_000005845.2_ASM584v2_genomic

@@ -78,3 +78,14 @@
 `sbatch home/.../BIOL7263_Genomics/scripts/fastqc/ecoli_fastqc.sbatch`
 
 
+[Read 1 output file](read_1_fastqc.html)
+
+[Read 2 output file](read_2_fastqc.html)
+
+
+
+
+
+
+
+
