@@ -3,10 +3,9 @@
 
 [Lecture Notes](lecture_notes.html)
 
+> All of the scripts and batch files are hyperlinked within the text.
+
 ## **Sequence Data Quality Control & Adaptor Trimming**
-
-- All of the scripts and batch files are hyperlinked within the text.
-
 
 1. Login to OSCER
 

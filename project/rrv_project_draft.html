@@ -11,7 +11,7 @@
 
 
 
-<title>session_3.knit</title>
+<title>rrv_project_draft.knit</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -352,572 +352,171 @@ display: none;
 </div>
 
 
-<div id="class-notes" class="section level1">
-<h1><strong>Class Notes</strong></h1>
-<p><a href="lecture_notes.html">Lecture Notes</a></p>
-<blockquote>
-<p>All of the scripts and batch files are hyperlinked within the
-text.</p>
-</blockquote>
-<div id="sequence-data-quality-control-adaptor-trimming" class="section level2">
-<h2><strong>Sequence Data Quality Control &amp; Adaptor
-Trimming</strong></h2>
+<div id="exploring-rna-seq-data-for-the-presence-of-unreported-or-novel-viruses-in-the-genus-rosa" class="section level1">
+<h1><strong>Exploring RNA-seq data for the presence of unreported or
+novel viruses in the genus <em>Rosa</em> </strong></h1>
+<div id="overview-of-the-project" class="section level2">
+<h2><strong>Overview of the project</strong></h2>
+<ol style="list-style-type: decimal">
+<li>Download SRA data (RNA-seq) -&gt; using the array system</li>
+<li>Download Reference genome</li>
+<li>QC and trimming of raw data</li>
+<li>Reference mapping of reads to host genome(Hisat2 which is best used
+for RNA onto DNA: think about exons)</li>
+<li>Gather unmapped reads using the flags (may have to convert the SAM
+to a fastq file for assembly)</li>
+<li>Assembly of reads (rnaSPADES)</li>
+<li>Create a database of viruses (using the taxa accession or ID) so
+that BLAST can be run locally</li>
+<li>Use Diamond for blasting (requires protein sequences: translate the
+nucleic acid to protein)</li>
+<li>Accumulate BLAST results for both nucleotide and protein blast</li>
+<li>Analyze results</li>
+</ol>
+<p>I am planning to maintain everything in the scratch folder on the
+OSCER. Also, I am keeping all the scripts in my Rstudio folder so that I
+can easily upload the correct scripts while correcting them when
+submitting jobs.</p>
+<div id="download-sra-data-rna-seq" class="section level3">
+<h3><strong>1. Download SRA Data (RNA-Seq)</strong></h3>
 <ol style="list-style-type: decimal">
 <li>Login to OSCER</li>
 </ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
+<pre class="bach"><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Activate environment</li>
 </ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
+<pre class="bach"><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li><p>Create <strong><a href="scripts/trim_galore.sbatch">sbatch</a></strong> and <strong><a href="scripts/trim_galore.sh">sh</a></strong> files for SLRM
-submission.</p></li>
-<li><p>Run trim_galore and look for 1) MiSeq 2) paired end or 3)
-Illumina 1.9+</p></li>
+<li>We can include this line of code in our script.</li>
 </ol>
-<p><code>trim_galore --illumina --paired --phred33 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/read_1.fastq.gz/scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/read_2.fastq.gz</code></p>
-<p><code>trim_galore --paired --fastqc --gzip --cores 4 --length 100 /scratch/biol726310/BIOL7263_Genomics/trim_galore read_1.fastq.gz /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/read_2.fastq.gz --basename trimmed_reads -o /scratch/biol726310/BIOL7263_Genomics/trim_galore/</code></p>
-<ol start="5" style="list-style-type: decimal">
-<li><p>Submit the job
-<code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/trim_galore/trim_galore.sbatch</code></p></li>
-<li><p>Check on job <code>squeue -u biol726310</code></p></li>
-<li><p>We can count the lines after trimming</p></li>
-</ol>
-<p><code>zcat trimmed_reads_val_1.fq.gz | wc -l</code></p>
-<p><code>zcat trimmed_reads_val_2.fq.gz | wc -l</code></p>
-</div>
-<div id="random-subsampling-and-digital-normalisation" class="section level2">
-<h2><strong>Random Subsampling and Digital Normalisation</strong></h2>
-<ul>
-<li>Oftentimes, the data obtained from analyses may be overwhelming for
-your local computer. This can be circumvented by creating random
-subsamples of the trimmed data. We can then perform assembly with this
-subsampled data.</li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>We will use the program seqtk which is a toolkit for FASTA/Q
-processing</li>
-</ol>
-<p><code>seqtk</code> <code>seqtk sample</code></p>
+<pre class="bach"><code>module load SRA-Toolkit/3.0.3-gompi-2022a</code></pre>
 <ol start="4" style="list-style-type: decimal">
-<li>Randomly sampling 10% of the dataset. 10% is expressed as a decimal.
-This will create two different random samples.</li>
+<li>The following code is our <strong><a href="scripts/fastq_dump.sbatch">sbatch</a></strong> file and contains
+the <code>array</code> argument. This must be alter according to the
+number of individual jobs being submitted.</li>
 </ol>
-<p><code>seqtk sample trimmed_reads_val_1.fq.gz 0.1 &gt; trimmed_reads_val_1_subsample_one.fq</code></p>
-<p><code>seqtk sample trimmed_reads_val_1.fq.gz 0.1 &gt; trimmed_reads_val_1_subsample_two.fq</code></p>
-<p><code>head trimmed_reads_val_1_subsample*</code></p>
+<pre class="bach"><code>#!/bin/bash
+#
+#SBATCH --partition=normal
+#SBATCH --ntasks=1
+#SBATCH --mem 16G
+#SBATCH --output=dump_sort_%J_stdout.txt
+#SBATCH --error=dump_sort_%J_stderr.txt
+#SBATCH --job-name=dump_sort
+#SBATCH --array=1-3
+# 
+
+bash /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.sh $(sed -n &quot;${SLURM_ARRAY_TASK_ID}p&quot; /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.args)</code></pre>
 <ol start="5" style="list-style-type: decimal">
-<li>As you will notice, the sub samples are the same. This is because
-the same seed is used and is assigned as the standard method. We have to
-change the seed option to get genuinely random samples with different
-seeds. We can use the <code>-s ___</code> to set the seed of our random
-samples.</li>
+<li>Here is our <strong><a href="scripts/fastq_dump.sh">script</a></strong> file which contains a
+line of code that specifies a loading of the SRA-Toolkit. This program
+will be used to obtain data associated with a specific accession.</li>
 </ol>
-<p><code>seqtk sample -s 1234 trimmed_reads_val_1.fq.gz 0.1 &gt; trimmed_reads_val_1_subsample_three.fq</code></p>
-<p><code>seqtk sample -s 5678 trimmed_reads_val_1.fq.gz 0.1 &gt; trimmed_reads_val_1_subsample_four.fq</code></p>
-<p><code>head trimmed_reads_val_1_subsample_three.fq</code></p>
-<p><code>head trimmed_reads_val_1_subsample_four.fq</code></p>
+<pre class="bach"><code>module load SRA-Toolkit/3.0.3-gompi-2022a
+
+fastq-dump --split-files $1 -O /scratch/biol726310/BIOL7263_Genomics/rrv_project</code></pre>
 <ol start="6" style="list-style-type: decimal">
-<li>We are going to clean up the files and add the same seed so that the
-analyses are the same going forward.</li>
+<li>Lastly, we have a <strong><a href="scripts/fastq_dump.args">.args</a></strong> file which contains a
+list of information that will be run using the array system.</li>
 </ol>
-<p><code>rm *.fq</code></p>
-<p><code>seqtk sample -s 628 trimmed_reads_val_1.fq.gz 0.5 &gt; trimmed_reads_val_1_subsampled.fq</code></p>
-<p><code>seqtk sample -s 628 trimmed_reads_val_2.fq.gz 0.5 &gt; trimmed_reads_val_2_subsampled.fq</code></p>
-<ol start="7" style="list-style-type: decimal">
-<li>We need to zip the the files but seqtk cannot produce them. For
-this, we will use <code>gzip</code> or <code>pigz</code>.</li>
-</ol>
-<p><code>pigz *.fq</code></p>
+<pre class="bach"><code>SRR29872021
+SRR29872022
+SRR29872023
+SRR29872030
+SRR29872031
+SRR29872032
+SRR29872049</code></pre>
+<p><em>___________________________________________________________________________________________________</em></p>
 </div>
-<div id="digital-normalisation" class="section level2">
-<h2>Digital Normalisation</h2>
-<ul>
-<li>Digital normalization is a computational technique used to reduce
-redundancy and improve the efficiency of downstream analysis for
-high-throughput sequencing data, particularly FASTQ files generated by
-Illumina sequencers. BBNorm from the BBtools package is a great
-technique for this.</li>
-</ul>
+<div id="downloading-the-reference-genome-of-interest" class="section level3">
+<h3><strong>2. Downloading the Reference genome of
+interest</strong></h3>
+<p>In this case, we will use the **Rosa____** genome as a reference.
+This reference corresponds with the RNA-seq data downloaded in the
+previous section.</p>
+<p>We can manually do this, or download using the <code>wget</code> and
+the respective link. Below is from our class exercises</p>
+<p>Steps: 1. Go to NCBI 2. Go the genomes 3. Search organism of interest
+4. Select FTP 5. Copy link for file of interest (in our case, we will
+copy the link for the genomic.fna.gz, we may also want to grab the
+genomic.gff.gz)</p>
+<pre class="bach"><code>wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.fna.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome
+
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.gff.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome</code></pre>
+<p>Once these are downloaded, we will likely need to unzip them for
+further analysis. In this case, we will use an <code>gunzip</code>
+command.</p>
+<pre class="bach"><code>gunzip /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/*.gz</code></pre>
 </div>
-<div id="contaminant-checking" class="section level2">
-<h2>Contaminant checking</h2>
-<ul>
-<li>A number of tools are available which also enable to you to quickly
-search through your reads and assign them to particular taxa or
-taxonomic groups. These can serve as a quick check to make sure your
-samples or libraries are not contaminated with DNA from other sources.
-If you are performing a de-novo assembly, for example, and have DNA
-sequences present from multiple organisms, you will risk poor results
-and chimeric contigs.</li>
-</ul>
-</div>
-<div id="aligning-illumina-data-to-a-reference-sequence" class="section level2">
-<h2><strong>Aligning Illumina Data to a Reference Sequence</strong></h2>
-<ul>
-<li><p>Now that we have checked the quality of our raw data, we can
-begin the process of aligning the trimmed reads against a reference
-sequence. In this way we can compare how the reference sequence, and the
-strain we are interested in compare. We will be using <strong>BWA
-(Burrows-Wheeler aligner)</strong>.</p></li>
-<li><p>By mapping reads against a reference, what we mean is that we
-want to go from a FASTQ file of lots of reads and a FASTA file with a
-set of contiguous sequences, to another type of file (described later)
-that lists the reads AND where/if those reads map (align) against the
-reference.</p></li>
-</ul>
-</div>
-<div id="sequencing-error" class="section level2">
-<h2>Sequencing Error</h2>
-<ul>
-<li>As an example, a region highlighted in green (other colors) on may
-show that most reads agree with the reference sequence (i.e. the
-C-base). However, two reads near the bottom show an A-base. In this
-situation we can safely assume that the A-bases are due to a sequencing
-error rather than a genuine variant since the ‘variant’ has only one
-read supporting it. If this occurred at a higher frequency however, we
-would struggle to determine whether it was a genuine variant or an
-error.</li>
-</ul>
-</div>
-<div id="pcr-duplication" class="section level2">
-<h2>PCR Duplication</h2>
-<ul>
-<li><p>As another example, a highlighted region in red shows what
-appears to be a variant. A C-base is present in the reference and half
-the reads, whilst an A-base is present in a set of reads which all start
-at the same position.</p></li>
-<li><p>So we must ask, is this a genuine difference or a sequencing or
-sample preparation error? What do you think? If this was a real sample,
-would you expect all the reads containing an A-base to start at the same
-location?</p></li>
-<li><p>The answer is probably not. This ‘SNP’ is in fact probably an
-artifact of PCR duplication - i.e. the same fragment of DNA has been
-replicated many times more than the average and happens to contain an
-error at the first position. We can filter out such reads after mapping
-to the reference (we will do this shortly).</p></li>
-<li><p>It’s always important to think critically about any findings -
-don’t assume that whatever bioinformatic tools you are using are
-perfect. Or that you have used them perfectly.</p></li>
-</ul>
-</div>
-<div id="generating-an-index" class="section level2">
-<h2><strong>Generating an Index</strong></h2>
-<ul>
-<li><p>Before we can start aligning reads to a reference genome, the
-genome sequence needs to be ‘indexed’, this means sorting the genome
-into easily searched chunks (similar to a book’s index).</p></li>
-<li><p>Today we are using “BWA”, but you may have read that is it
-deprecated/superceded by “minimap2” and there is a nice <a href="https://lh3.github.io/2018/04/02/minimap2-and-the-future-of-bwa">blog</a>🔍
-about it here.</p></li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>Looking at the BWA program.</li>
-</ol>
-<p><code>BWA</code></p>
-<ol start="4" style="list-style-type: decimal">
-<li>Making a directory for our script that we will submit to OSCER.</li>
-</ol>
-<p><code>mkdir /home/biol726310/BIOL7263_Genomics/scripts/BWA/</code></p>
-<ol start="5" style="list-style-type: decimal">
-<li>We will add the following line of code to our script called
-<strong><a href="scripts/ecoli_index.sh">ecoli_index.sh</a></strong>. We
-will also need to make our sbatch file called <strong><a href="scripts/ecoli_index.sbatch">ecoli_index.sbatch</a></strong>. Here
-the -p option sets the output folder, so our index will be written to
-the same location as our refrence sequence</li>
-</ol>
-<p><code>bwa index /scratch/biol726310/BIOL7263_Genomics/reference_sequences/ecoli/GCF_000005845.2_ASM584v2_genomic.fna -p /scratch/biol726310/BIOL7263_Genomics/reference_sequences/ecoli/GCF_000005845.2_ASM584v2_genomic</code></p>
-<ol start="6" style="list-style-type: decimal">
-<li>Submit the job</li>
-</ol>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/BWA/ecoli_index.sbatch</code></p>
-<ol start="6" style="list-style-type: decimal">
-<li>Check on job</li>
-</ol>
+<div id="qc-and-trimming-of-raw-data" class="section level3">
+<h3><strong>3. QC and trimming of raw data</strong></h3>
+<p>As part of the analysis, it is important to consider the quality of
+the reads being analyzed. This is publicly available data, therefore, I
+assume the data is of high quality (otherwise, why publish?). Eitherway,
+we will still work through the process of data quality control and
+trimming of the raw fastq files (for sake of practice and
+understanding).</p>
+<p>To view the first few headers we can use the <code>zcat</code>
+command (this is similar to ‘cat’ but works with zipped files). We can
+also use <code>head</code> and <code>tail</code> to look at the data. So
+in the case that our file is NOT zipped, we will use <code>cat</code>,
+otherwise we will use <code>zcat</code>.</p>
+<pre class="bach"><code>cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq | head | grep @SRR
+cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | head | grep @SRR</code></pre>
+<p>Check that there is an identical number of reads in each file (this
+one is not working):</p>
+<pre class="bach"><code>cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | grep @SRR | wc –l</code></pre>
+<p>From our class exercises: We will need to create an <strong><a href="scripts/rose_fastqc.sbatch">sbatch file</a></strong> and
+<strong><a href="scripts/rose_fastqc.sh">sh script</a></strong> with our
+code.</p>
+<pre class="bach"><code>fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
+
+fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/</code></pre>
+<p>Submit the job</p>
+<pre class="bach"><code>sbatch /scratch/biol726310/BIOL7263_Genomics/rrv_project/scripts/rose_fastqc.sbatch</code></pre>
+<p>Check on job</p>
 <p><code>squeue -u biol726310</code></p>
-</div>
-<div id="mapping-reads-to-the-indexed-reference-sequence" class="section level2">
-<h2><strong>Mapping Reads to the Indexed Reference
-Sequence</strong></h2>
-<ul>
-<li>Now we can begin to align ‘read_1’ and ‘read_2’ to the reference
-genome. First of all change back into raw reads directory where we made
-the trimmed and QC reads, and then create a subdirectory to contain our
-mapping results.</li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>Now we can</li>
-</ol>
-<p><code>cd /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/</code></p>
-<p><code>mkdir mapping_to_reference</code></p>
-<p><code>cd mapping_to_reference</code></p>
-<ol start="4" style="list-style-type: decimal">
-<li>Looking at <code>bwa mem</code></li>
-</ol>
-<ul>
-<li>From this we can see that we need to provide BWA with a set of FASTQ
-files containing the raw reads (denoted by ‘&lt;in.fq&gt;’ meaning
-required and ‘[in2.fq]’ as optional) and a reference file (unhelpfully
-this is listed as ‘<idxbase>’) and any other options we wish to
-change.</li>
-</ul>
-<ol start="5" style="list-style-type: decimal">
-<li>Beginning the alignment process</li>
-</ol>
-<ul>
-<li><p>Our reference sequences are in the file:
-<code>/scratch/biol726310/BIOL7263_Genomics/reference_sequences/ecoli/GCF_000005845.2_ASM584v2_genomic.fna</code></p></li>
-<li><p>Our filtered reads are in the files:
-<code>/scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/trimmed_reads_val_1.fq.gz</code></p></li>
-</ul>
-<p><code>/scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/trimmed_reads_val_2.fq.gz</code></p>
-<p>In order to align our paired reads using multi-threading, and output
-to a file called ecoli_mapped.sam. We will set the output ‘-o’ to
-ecoli_mapped.sam and the number of threads/processes the program should
-use (‘-t’).</p>
-<p>We will create the .sh file called <strong><a href="scripts/ecoli_bwa_mem.sh">ecoli_bwa_mem.sh</a></strong> with the
-above commands updated for your file system and a .sbatch file called
-<strong><a href="scripts/ecoli_bwa_mem.sbatch">ecoli_bwa_mem.sbatch</a></strong>
-with the ‘n-task = 4’ option, upload to the scripts/BWA folder and
-submit the job.</p>
-<p>It seems that we may need to have the trimmed reads in a similar
-folder (upstream folder), otherwise, we cannot access the data.</p>
-<ol start="6" style="list-style-type: decimal">
-<li>Submit the job</li>
-</ol>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/BWA/ecoli_bwa_mem.sbatch</code></p>
-<ol start="7" style="list-style-type: decimal">
-<li>Check on job</li>
-</ol>
-<p><code>squeue -u biol726310</code></p>
-<p>Stopped right before task 7.</p>
-</div>
-<div id="sam-file-manipulation" class="section level2">
-<h2><strong>SAM File Manipulation</strong></h2>
-<ul>
-<li><p>Before we can visualize the alignment in a more meaningful way,
-it is beneficial to convert the SAM file into a BAM file (Binary
-AlignMent format) for several reasons. SAM files are great for human
-readability, but they are not so good for fast computational access. The
-binary format will allow speedy access to the information stored within
-it, and it also reduces the file size on the disk.</p></li>
-<li><p>To convert the SAM file to a BAM file we will use another program
-called <strong>samtools</strong>.</p></li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>View samtools</li>
-</ol>
-<p><code>samtools view</code></p>
-<ul>
-<li>We can see that we need to provide ‘samtools view’ with a reference
-genome as a FASTA formatted file ‘-T’, the ‘-b’ and ‘-S’ options to
-indicate that the output should be in BAM format, and that the input is
-in SAM format, all along with the alignment input file itself -
-e.g.</li>
-</ul>
-<p>We will upload the following <strong><a href="scripts/ecoli_samtools_view.sbatch">sbatch</a></strong> and
-<strong><a href="scripts/ecoli_samtools_view.sh">sh/script</a></strong>
-files to convert the SAM into a BAM file.</p>
-<p>Now that we have the BAM file, we are able to sort the BAM file as
-desired. We uploaded the following <strong><a href="scripts/samtools_sort.sbatch">sbatch</a></strong> and <strong><a href="scripts/samtools_sort.sh">sh/script</a></strong> files to sort the
-BAM file.</p>
-</div>
-<div id="efficiency-for-the-previous-steps" class="section level2">
-<h2><strong>Efficiency for the previous steps</strong></h2>
-<ul>
-<li>We have aligned trimmed reads to a reference genome, converted SAM
-to BAM and sorted the BAM file. It is much faster to create one pipeline
-with all the steps involved.</li>
-</ul>
-<p>The following files were submitted to OSCER 1) <strong><a href="scripts/ecoli_map_sort.sbatch">sbatch</a></strong> and <strong><a href="scripts/ecoli_map_sort.sh">sh/script</a></strong>.</p>
-</div>
-<div id="removing-suspected-pcr-duplicates" class="section level2">
-<h2>Removing suspected PCR duplicates</h2>
-<ul>
-<li>The program ‘samtools’ can do a reasonably good job of removing
-potential PCR duplicates, especially when using paired-end read
-data</li>
-</ul>
-<p>First we need to sort the BAM by ‘read name’. The command after this
-requires that the BAM is sorted in this way.</p>
-<p>Next we will instruct ‘samtools’ to add special ‘ms’ and ‘MC’ tags
-for the ‘samtools markdup’ program to use later on. This is because
-‘BWA’ can sometimes leave unusual FLAG information in the ‘SAM’ file
-records.</p>
-<p>We then re-sort our BAM file by chromosomal/position coordinates. We
-have to be careful with the position of the output file.</p>
-<p>We can now mark the duplicates and remove them with the ‘-r’
-option.</p>
-<p>The following is applied to the</p>
-<p><strong><a href="scripts/ecoli_markdup.sh">script</a></strong> and
-<strong><a href="scripts/ecoli_markdup.sbatch">sbatch</a></strong>
-files.</p>
-<p>Most programs used to view the BAM formatted data require an index
-file to locate the reads mapping to a particular location quickly. We
-did this for our reference genome file. The <strong><a href="scripts/bam_index.sh">script</a></strong> and <strong><a href="scripts/bam_index.sbatch">sbatch</a></strong> files are included
-here.</p>
-</div>
-<div id="mapping-statistics" class="section level2">
-<h2><strong>Mapping Statistics</strong></h2>
-<ul>
-<li>Now we can begin to generate some summary statistics. We can run the
-following line of code on the login node (if so,we have to alter the
-path based on our location).</li>
-</ul>
-<pre class="bach"><code>samtools flagstat ecoli_mapped_namesort_fixmate_sort_markdup.bam &gt; mappingstats.txt</code></pre>
-<p>If we were to incorporate this into a script, we would want to
-include the entire path.</p>
-<pre class="bach"><code>samtools flagstat /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam &gt; /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/mappingstats.txt</code></pre>
-</div>
-<div id="cleaning-up" class="section level2">
-<h2>Cleaning up</h2>
-<ul>
-<li>It is generally good practice to keep your intermediary files whilst
-you are continuing your analysis, but in this case we really don’t need
-some of the extra files we have created during this process. Indeed, we
-are only really interested in the final file
-‘ecoli_mapped_namesort_fixmate_sort_markdup.bam’.</li>
-</ul>
-<p>Two approaches:</p>
-<pre class="bach"><code>rm ecoli_mapped.bam
-rm ecoli_mapped.sam
-rm ecoli_mapped_namesort.bam
-rm ecoli_mapped_namesort_fixmate.bam
-rm ecoli_mapped_namesort_fixmate_sort.bam
-rm ecoli_mapped_sorted.bam</code></pre>
-<p>This approach is more advisable as the data is fairly large but would
-require making a script and submitting an sbatch file.</p>
-<pre class="bach"><code>rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped.bam
-rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped.sam
-rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort.bam
-rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate.bam
-rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort.bam
-rm /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_sorted.bam</code></pre>
-</div>
-<div id="qualimap" class="section level2">
-<h2><strong>QualiMap</strong></h2>
-<ul>
-<li>Summarises the mapped alignments in much more detail than the
-mapping stats file we produced previously. It’s a technical tool which
-allows you to assess the sequencing for any problems and biases in the
-sequencing and the alignment rather than a tool to deduce biological
-features.</li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>View QualiMap</li>
-</ol>
-<p><code>qualimap bamqc</code></p>
-<p>To generate a ‘QualiMap bamqc’ report we can run the code in our
-<strong><a href="scripts/qualmap.sh">script</a></strong> and submit the
-job to OSCER as a <strong><a href="scripts/qualmap.sbatch">sbatch</a></strong> file.</p>
-<ol start="4" style="list-style-type: decimal">
-<li>Submit the job</li>
-</ol>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/BWA/qualmap.sbatch</code></p>
-<ol start="5" style="list-style-type: decimal">
-<li>Check on job</li>
-</ol>
-<p><code>squeue -u biol726310</code></p>
-<p>This will create a subfolder called ‘bamqc’ and a graphical report
-file <strong><a href="qualimapReport.html">qualimapReport.html</a></strong>. There are a
-number of measures that this program will do. We will look at a few of
-them. We can also look at the <strong><a href="genome_results.txt">genome_results.txt</a></strong> to view other
-statistics. There is also I folder that contains all of the images for
-the analysis.</p>
-</div>
-<div id="coverage-across-the-reference" class="section level2">
-<h2>Coverage across the reference</h2>
-<ul>
-<li>This displays the number of reads that cover each section of the
-genome. The red line shows a rolling average (about 175x).</li>
-</ul>
-</div>
-<div id="insert-size-histogram" class="section level2">
-<h2>Insert size histogram</h2>
-<ul>
-<li>This displays the size of the DNA fragments. It shows how the DNA
-was selected before sequencing.</li>
-</ul>
-</div>
-<div id="igv" class="section level2">
-<h2><strong>IGV</strong></h2>
-<ul>
-<li>Download <strong><a href="https://igv.org/doc/desktop/#DownloadPage/">IGV</a></strong></li>
-</ul>
-<ol style="list-style-type: decimal">
-<li>Load the genome reference and our alignments locally.</li>
-</ol>
-<p><strong>a) import the reference sequence</strong> - click on ‘Genomes
--&gt; Load Genome from File…’ - select genome and click “Open” - File
-type: <code>GCF_000005845.2_ASM584v2_genomic.fna (.fna file)</code></p>
-<p><strong>b) Import E. coli reference annotation</strong> - Load the
-annotation (.gff) by ‘File -&gt; Load from File…’.</p>
-<p><strong>c) Load BAM alignment</strong> - Note that IGV requires the
-.bai index file to also be in the same directory (we generated that
-earlier with samtools index). - Select ‘File…’ and ‘Load From File…’.
-Select the BAM file and open. - Note that you can load more BAM files if
-you wish to compare different samples, sequencing technologies or the
-results of different mapping programs.</p>
-</div>
-<div id="snps-and-indels" class="section level2">
-<h2><strong>SNPs and Indels</strong></h2>
-<div id="manually-identify-a-region-without-any-reads-mapping" class="section level3">
-<h3>Manually Identify a Region Without any Reads Mapping</h3>
-<ul>
-<li><p>This can be quite difficult to find even with a very small
-genome. Zoom out as far as you can, but where you are still able to see
-the read mappings.</p></li>
-<li><p>To be able to see this coverage information across the entire
-genome, regardless of how far you are zoomed out, you’ll need to create
-a ‘TDF file’ which contains coverage information across windows of ‘X’
-number of bases on the genome.</p></li>
-</ul>
+<div id="results-of-the-quality-control" class="section level4">
+<h4><strong>Results of the quality control</strong></h4>
+<p><em>___________________________________________________________________________________________________</em></p>
 </div>
 </div>
-<div id="manually-identify-a-region-containing-repetitive-sequences" class="section level2">
-<h2><strong>Manually Identify a Region Containing Repetitive
-Sequences</strong></h2>
-<ul>
-<li><p>we could also try using the QualiMap reports from before to give
-you an idea where to look.</p></li>
-<li><p>Manual curation of SNPs and INDELs is a difficult and laborious
-task.</p></li>
-<li><p>Only changes from the reference sequence are displayed in
-IGV</p></li>
-<li><p>Genuine SNPs/Indels should be present on both read 1 and read
-2</p></li>
-<li><p>Genuine SNPs/Indels should be present on both strands</p></li>
-<li><p>Genuine SNPs/Indels should be supported by a good (i.e. 20-30x)
-depth of coverage</p></li>
-<li><p>Very important mutations (i.e. ones relied upon in a paper)
-should be confirmed via PCR/Sanger sequencing.</p></li>
-</ul>
+<div id="reference-mapping-of-reads-to-host-genome" class="section level3">
+<h3><strong>4. Reference mapping of reads to host genome</strong></h3>
+<p>We will be using Hisat2 for read mapping because this program is
+particular good at mapping RNA reads onto a DNA genome.</p>
+<p><em>___________________________________________________________________________________________________</em></p>
 </div>
-<div id="automated-analyses" class="section level2">
-<h2><strong>Automated Analyses</strong></h2>
+<div id="gather-unmapped-reads-using-the-flags" class="section level3">
+<h3><strong>5. Gather unmapped reads using the flags</strong></h3>
 <ul>
-<li><p>Viewing alignments is useful when convincing yourself, and your
-peers, that a particular mutation is real rather than an artefact, and
-for getting a feel for short read sequencing datasets. However, if we
-want to quickly and easily find variants we need to be able to generate
-lists of variants, and in which gene they occur (if any) and what effect
-that they might have. We also need to know which (if any) genes are
-missing (i.e. have zero coverage).</p></li>
-<li><p>To ‘call’ (predict) variants we can use a number of packages
-(e.g. VarScan, GATK, Picard Tools). However here, we will show you how
-to use the ‘bcftools’ package. First we need to generate a ‘pileup’ file
-which contains only the locations with the variants.</p></li>
+<li>We may have to convert the SAM to a fastq file for assembly</li>
 </ul>
-<ol style="list-style-type: decimal">
-<li>Login to OSCER</li>
-</ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
-<ol start="2" style="list-style-type: decimal">
-<li>Activate environment</li>
-</ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
-<ol start="3" style="list-style-type: decimal">
-<li>View bfctools</li>
-</ol>
-<p><code>pfctools mpileup</code></p>
-<ol start="4" style="list-style-type: decimal">
-<li><p>We will need to construct our <strong><a href="scripts/ecoli_vcf.sh">script</a></strong> and <strong><a href="scripts/ecoli_vcf.sbatch">sbatch</a></strong> files and submit a
-job to OSCER.</p></li>
-<li><p>Submit the job</p></li>
-</ol>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/variant_calling/ecoli_vcf.sbatch</code></p>
-<ol start="5" style="list-style-type: decimal">
-<li>Check on job</li>
-</ol>
-<p><code>squeue -u biol726310</code></p>
-<p>Note that we are asking ‘bcftools mpileup’ to generate an
-uncompressed VCF output with the ‘-O v’ option. The ‘-P Illumina’ tells
-‘bcftools’ that it is dealing with Illumina data, so that it can apply
-to the correct model to help account for mis-calls and/or indels.</p>
-<p>This output by itself is not super useful on its own, as it contains
-information on each position in the genome. So let’s use ‘bcftools’
-again to ‘call’ what it thinks are the variant sites.</p>
-<p>Here we have asked ‘bcftools’ to ‘call’ variants assuming a ploidy of
-1, and to output only the variant sites in the ‘VCF’ format. We
-generated the <strong><a href="scripts/ecoli_call.sh">script</a></strong> and <strong><a href="scripts/ecoli_call.sbatch">sbatch</a></strong>.</p>
-<pre class="bach"><code>grep -v -c  &quot;^#&quot; /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/var.called.vcf</code></pre>
-<p>Now we can filter this further, and with a tool made specifically to
-work with VCF files, in order to ensure we only retain regions where we
-have &gt;90% allele frequency - we can do this with a tool called
-‘vcftools’. We will submit our <strong><a href="scripts/ecoli_filt.sh">script</a></strong> and <strong><a href="scripts/ecoli_filt.sbatch">sbatch</a></strong> files to OSCER for
-processing.</p>
-<pre class="bach"><code>vcftools --minDP 10 --min-alleles 2 --max-alleles 2
---non-ref-af 0.9 --vcf /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/var.called.vcf --recode --recode-INFO-all --out /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/var.called.filt</code></pre>
-<p>You are safe to ignore any warnings that you see. This command
-creates a file called ‘var.called.filt.recode.vcf’. Once complete, you
-can try viewing the file using the ‘more’ command (or your favourite
-text editor).</p>
-<p>The lines starting with ‘DP’ and ‘INDEL’ contain various details
-concerning the variants. For haploid organisms, most of these details
-are not necessary. This forms our definitive list of variants for this
-sample.</p>
-<p>We can now upload the CVF into our IGV program.</p>
+<p><em>___________________________________________________________________________________________________</em></p>
 </div>
-<div id="locating-genes-that-are-missing-compared-to-the-reference" class="section level2">
-<h2><strong>Locating Genes that are Missing Compared to the
-Reference</strong></h2>
-<ul>
-<li>We can use a command from the BEDTools package to identify annotated
-genes which are not covered by reads across their full length.</li>
-</ul>
-<p>We can upload our <strong><a href="scripts/ecoli_cover.sh">script</a></strong> and <strong><a href="scripts/ecoli_cover.sbatch">sbatch</a></strong> files to to find
-the genes that were not covered.</p>
-<p>Take a look and you will see that the output contains one row per
-annotated gene, whereby the 13th (and final) column contains the
-proportion of the gene that is covered by reads from our sequencing.
-1.00 means the gene is 100% covered and 0.00 means there is no
-coverage.</p>
-<pre class="bach"><code>sort -t $&#39;\t&#39; -g -k 13 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/gene_coverage.txt | less -S</code></pre>
-<p>It may be easier to view the data ommiting the annotation column,
-thus:</p>
-<pre class="bach"><code>sort -t $&#39;\t&#39; -g -k 13 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/gene_coverage.txt | cut -f1-8,10-13 | less -S
-</code></pre>
+<div id="assembly-of-reads-rnaspades" class="section level3">
+<h3><strong>6. Assembly of reads (rnaSPADES)</strong></h3>
+<p><em>___________________________________________________________________________________________________</em></p>
+</div>
+<div id="create-a-database-of-viruses-using-the-taxa-accession-or-id-so-that-blast-can-be-run-locally" class="section level3">
+<h3><strong>7. Create a database of viruses (using the taxa accession or
+ID) so that BLAST can be run locally</strong></h3>
+<p><em>___________________________________________________________________________________________________</em></p>
+</div>
+<div id="use-diamond-for-blasting-requires-protein-sequences-translate-the-nucleic-acid-to-protein" class="section level3">
+<h3><strong>8. Use Diamond for blasting (requires protein sequences:
+translate the nucleic acid to protein)</strong></h3>
+<p><em>___________________________________________________________________________________________________</em></p>
+</div>
+<div id="accumulate-blast-results-for-both-nucleotide-and-protein-blast" class="section level3">
+<h3><strong>9. Accumulate BLAST results for both nucleotide and protein
+blast</strong></h3>
+<p><em>___________________________________________________________________________________________________</em></p>
+</div>
+<div id="analyze-results" class="section level3">
+<h3><strong>10. Analyze results</strong></h3>
+</div>
 </div>
 </div>
 

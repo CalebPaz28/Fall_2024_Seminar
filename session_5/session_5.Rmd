@@ -1,15 +1,50 @@
 
-### **Class Notes**
+## **Class Notes**
 
 [Lecture Notes](lecture_notes.html)
 
-### **Scripts**
+> All script files are embedded within the text as links.
 
-[]()
 
-### **Topic**
-1. 
-2. 
+## **Assembly of Unmapped Reads**
+
+- In the previous chapter we cleaned our data, checked QC metrics, mapped our data to a reference, obtained a list of variants and identyfied an overview of any missing regions.
+
+- we will examine those reads which did not map to the reference genome. We want to know what these sequences represent. Are they novel genes, plasmids or just contamination? To do this we will extract the unmapped reads, evaluate their quality, prepare them for de-novo assembly, assemble them using SPAdes, generate assembly statistics and then produce some annotation via Pfam, BLAST and RAST. 
+
+1. Login to OSCER
+
+`ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu`
+
+2. Activate environment
+
+`mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics`
+
 3. 
-4. 
-5. 
+
+```bach
+cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/
+
+ls -lath
+
+mkdir unmapped_assembly
+
+cd unmapped_assembly
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

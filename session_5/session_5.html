@@ -352,19 +352,44 @@ display: none;
 </div>
 
 
-<div id="what-we-were-able-to-do-on-_______" class="section level2">
-<h2><strong>What we were able to do on _______</strong></h2>
-<div id="class-notes" class="section level3">
-<h3>Class Notes</h3>
-<p><a href></a></p>
-<p><a href></a></p>
-<p><a href></a></p>
+<div id="class-notes" class="section level2">
+<h2><strong>Class Notes</strong></h2>
+<p><a href="lecture_notes.html">Lecture Notes</a></p>
+<blockquote>
+<p>All script files are embedded within the text as links.</p>
+</blockquote>
 </div>
-<div id="scripts" class="section level3">
-<h3>Scripts</h3>
-<p><a href></a></p>
-<p><a href></a></p>
-</div>
+<div id="assembly-of-unmapped-reads" class="section level2">
+<h2><strong>Assembly of Unmapped Reads</strong></h2>
+<ul>
+<li><p>In the previous chapter we cleaned our data, checked QC metrics,
+mapped our data to a reference, obtained a list of variants and
+identyfied an overview of any missing regions.</p></li>
+<li><p>we will examine those reads which did not map to the reference
+genome. We want to know what these sequences represent. Are they novel
+genes, plasmids or just contamination? To do this we will extract the
+unmapped reads, evaluate their quality, prepare them for de-novo
+assembly, assemble them using SPAdes, generate assembly statistics and
+then produce some annotation via Pfam, BLAST and RAST.</p></li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Login to OSCER</li>
+</ol>
+<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
+<ol start="2" style="list-style-type: decimal">
+<li>Activate environment</li>
+</ol>
+<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
+<ol start="3" style="list-style-type: decimal">
+<li></li>
+</ol>
+<pre class="bach"><code>cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/
+
+ls -lath
+
+mkdir unmapped_assembly
+
+cd unmapped_assembly</code></pre>
 </div>
 
 

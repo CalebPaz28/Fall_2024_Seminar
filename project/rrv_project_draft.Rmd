@@ -1,0 +1,220 @@
+---
+output: html_document
+---
+
+# **Exploring RNA-seq data for the presence of unreported or novel viruses in the genus *Rosa* **
+
+## **Overview of the project**
+
+1. Download SRA data (RNA-seq) -> using the array system
+2. Download Reference genome
+3. QC and trimming of raw data
+4. Reference mapping of reads to host genome(Hisat2 which is best used for RNA onto DNA: think about exons)
+5. Gather unmapped reads using the flags (may have to convert the SAM to a fastq file for assembly)
+6. Assembly of reads (rnaSPADES)
+7. Create a database of viruses (using the taxa accession or ID) so that BLAST can be run locally
+8. Use Diamond for blasting (requires protein sequences: translate the nucleic acid to protein)
+9. Accumulate BLAST results for both nucleotide and protein blast
+10. Analyze results
+
+
+I am planning to maintain everything in the scratch folder on the OSCER. Also, I am keeping all the scripts in my Rstudio folder so that I can easily upload the correct scripts while correcting them when submitting jobs.
+
+
+### **1. Download SRA Data (RNA-Seq)**
+
+
+1. Login to OSCER
+
+```bach
+ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu
+```
+
+2. Activate environment
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+3. We can include this line of code in our script.
+
+```bach
+module load SRA-Toolkit/3.0.3-gompi-2022a
+```
+
+4. The following code is our **[sbatch](scripts/fastq_dump.sbatch)** file and contains the `array` argument. This must be alter according to the number of individual jobs being submitted.  
+
+```bach
+#!/bin/bash
+#
+#SBATCH --partition=normal
+#SBATCH --ntasks=1
+#SBATCH --mem 16G
+#SBATCH --output=dump_sort_%J_stdout.txt
+#SBATCH --error=dump_sort_%J_stderr.txt
+#SBATCH --job-name=dump_sort
+#SBATCH --array=1-3
+# 
+
+bash /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.sh $(sed -n "${SLURM_ARRAY_TASK_ID}p" /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.args)
+```
+
+5. Here is our **[script](scripts/fastq_dump.sh)** file which contains a line of code that specifies a loading of the SRA-Toolkit. This program will be used to obtain data associated with a specific accession. 
+
+```bach
+module load SRA-Toolkit/3.0.3-gompi-2022a
+
+fastq-dump --split-files $1 -O /scratch/biol726310/BIOL7263_Genomics/rrv_project
+```
+
+6. Lastly, we have a **[.args](scripts/fastq_dump.args)** file which contains a list of information that will be run using the array system.
+
+```bach
+SRR29872021
+SRR29872022
+SRR29872023
+SRR29872030
+SRR29872031
+SRR29872032
+SRR29872049
+```
+
+*___________________________________________________________________________________________________*
+
+### **2. Downloading the Reference genome of interest**
+
+In this case, we will use the **Rosa____** genome as a reference. This reference corresponds with the RNA-seq data downloaded in the previous section.
+
+
+We can manually do this, or download using the `wget` and the respective link. Below is from our class exercises
+
+Steps:
+1. Go to NCBI 
+2. Go the genomes 
+3. Search organism of interest 
+4. Select FTP 
+5. Copy link for file of interest (in our case, we will copy the link for the genomic.fna.gz, we may also want to grab the genomic.gff.gz) 
+
+
+```bach
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.fna.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome
+
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.gff.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome
+```
+
+Once these are downloaded, we will likely need to unzip them for further analysis. In this case, we will use an `gunzip` command.
+
+```bach
+gunzip /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/*.gz
+```
+
+### **3. QC and trimming of raw data**
+
+As part of the analysis, it is important to consider the quality of the reads being analyzed. This is publicly available data, therefore, I assume the data is of high quality (otherwise, why publish?). Eitherway, we will still work through the process of data quality control and trimming of the raw fastq files (for sake of practice and understanding).
+
+
+To view the first few headers we can use the `zcat` command (this is similar to 'cat' but works with zipped files). We can also use `head` and `tail` to look at the data. So in the case that our file is NOT zipped, we will use `cat`, otherwise we will use `zcat`.
+
+
+```bach
+cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq | head | grep @SRR
+cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | head | grep @SRR
+```
+
+Check that there is an identical number of reads in each file (this one is not working):
+
+```bach
+cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | grep @SRR | wc –l
+```
+
+From our class exercises: We will need to create an **[sbatch file](scripts/rose_fastqc.sbatch)** and **[sh script](scripts/rose_fastqc.sh)** with our code.
+
+```bach
+fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
+
+fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
+```
+
+Submit the job
+
+```bach
+sbatch /scratch/biol726310/BIOL7263_Genomics/rrv_project/scripts/rose_fastqc.sbatch
+```
+
+Check on job
+
+`squeue -u biol726310`
+
+
+#### **Results of the quality control**
+
+
+
+*___________________________________________________________________________________________________*
+
+
+### **4. Reference mapping of reads to host genome**
+
+We will be using Hisat2 for read mapping because this program is particular good at mapping RNA reads onto a DNA genome.
+
+
+
+
+
+
+
+*___________________________________________________________________________________________________*
+
+
+### **5. Gather unmapped reads using the flags**
+
+
+
+
+
+
+- We may have to convert the SAM to a fastq file for assembly
+
+
+*___________________________________________________________________________________________________*
+
+
+### **6. Assembly of reads (rnaSPADES)**
+
+
+*___________________________________________________________________________________________________*
+
+
+### **7. Create a database of viruses (using the taxa accession or ID) so that BLAST can be run locally**
+
+
+*___________________________________________________________________________________________________*
+
+
+### **8. Use Diamond for blasting (requires protein sequences: translate the nucleic acid to protein)**
+
+
+*___________________________________________________________________________________________________*
+
+
+### **9. Accumulate BLAST results for both nucleotide and protein blast**
+
+
+*___________________________________________________________________________________________________*
+
+
+### **10. Analyze results**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
