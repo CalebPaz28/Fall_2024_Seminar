@@ -362,6 +362,7 @@ display: none;
 <div id="assembly-of-unmapped-reads" class="section level2">
 <h2><strong>Assembly of Unmapped Reads</strong></h2>
 <ul>
+<li><p>Information adopted from Dr. Toomey.</p></li>
 <li><p>In the previous chapter we cleaned our data, checked QC metrics,
 mapped our data to a reference, obtained a list of variants and
 identyfied an overview of any missing regions.</p></li>
@@ -390,6 +391,202 @@ ls -lath
 mkdir unmapped_assembly
 
 cd unmapped_assembly</code></pre>
+<div id="extract-the-unmapped-reads" class="section level3">
+<h3>Extract the Unmapped Reads</h3>
+<p>We want to extract all of the reads that do NOT map to the assembly.
+Luckily, in the SAM/BAM format there is a special ‘bitwise flag’ or code
+that identifies how the reads and their read-mates are aligned to a
+reference.</p>
+<p>We can look at the flags by viewing the first five lines of our BAM
+file.</p>
+<pre class="bach"><code>samtools view /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam | head -n 5
+</code></pre>
+<p>Now, using the “Decoding SAM flags” tool, can you figure out what
+flag number we need for reads that are unmapped and where their mates
+are also unmapped? Click below to reveal the answer.</p>
+<p>The answer we were looking for is “12”.</p>
+<p>Why? Well, each position from the right of the binary code can be
+represented in decimal as 1, 2, 4, 6, 8, 16…etc. So, a ‘1’ in the third
+position from the right in binary is equivalent to a decimal “4”. You
+can then see how this matches to each of the outcomes in the “Decoding
+SAM flags” tool, e.g. selecting the third box is equivalent to a value
+of 4!</p>
+<p>Remember we wanted “read unmapped” (4) AND “mate unmapped” (8), so
+selecting both gives us “12” (or 0000001100 in binary), that’s all we
+need.</p>
+<p>This command outputs a BAM file “-b” and filters only those with a
+corresponding bit flag of “-f 12”.</p>
+<pre class="bach"><code>samtools view -b -f 12 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam</code></pre>
+<p>Have a look at some of the content of this new BAM file. Reminder: We
+have to navigate to the folder that contains the
+<code>unmapped.bam</code> file.</p>
+<pre class="bach"><code>
+samtools view unmapped.bam | head -n 5
+</code></pre>
+<p>For assembly, we need our reads in fastq format, but we need to
+convert them from the BAM format first.</p>
+<p>To convert them we will use the <code>bamtofastq</code> program from
+the <code>bedtools</code> package. There are other tools that you can
+use too, for example in the <code>Picard</code> package there is a tool
+called <code>SamToFastq</code> which provides a similar function.</p>
+<pre class="bach"><code>
+bedtools bamtofastq -i /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam \
+-fq /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq \
+-fq2 /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
+</code></pre>
+<p>We will submit a job to OSCER using the <strong><a href="scripts/bam_to_fasta.sh">bam_to_fasta.sh</a></strong> and
+<strong><a href="scripts/bam_to_fasta.sbatch">bam_to_fasta.sbatch</a></strong></p>
+<p>Submit the job
+<code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/bam_to_fasta.sbatch</code></p>
+<p>Check on job <code>squeue -u biol726310</code></p>
+</div>
+<div id="check-the-reads" class="section level3">
+<h3>Check the reads</h3>
+<pre class="bach"><code>
+cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly
+
+grep -c &quot;^@SRR&quot; unmapped_r1.fastq unmapped_r2.fastq 
+
+tail -n 4 unmapped_r1.fastq unmapped_r2.fastq 
+</code></pre>
+</div>
+<div id="evaluate-qc" class="section level3">
+<h3>Evaluate QC</h3>
+<p>Similar to our RRV project and to previous tasks, we will use the
+fastqc to check the quality of our data after mapping. We will submit <a href="scripts/">unmapped_fastqc.sh</a> and <a href="scripts/">unmapped_fastqc.sbatch</a> files to OSCER.</p>
+<pre class="bach"><code>fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/
+
+fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/</code></pre>
+<p>Submit the job</p>
+<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_fastqc.sbatch</code></p>
+<p>Check on job <code>squeue -u biol726310</code></p>
+<p>We can take a look at the html out files here: <a href="data_output/unmapped_r1_fastqc.html">File 1</a> and <a href="data_output/unmapped_r2_fastqc.html">File 2</a>.</p>
+</div>
+</div>
+<div id="de-novo-assembly" class="section level2">
+<h2>De novo Assembly</h2>
+<p>de novo is a Latin expression meaning “from the beginning,” “afresh,”
+“anew,” “beginning again.”. When we perform a de-novo assembly we try to
+reconstruct a genome or part of the genome from our reads without making
+any prior assumptions (in contrast to mapping where we compare our reads
+to what we think is a close reference sequence).</p>
+<p>We will be using an assembler called SPAdes. It generally performs
+pretty well with a variety of genomes. It can also incorporate longer
+reads produced from PacBio sequencers that we will use later in our
+adventure.</p>
+<p>One big advantage is that it is not just a pure assembler - it is a
+suite of programs that prepare the reads you have, assembles them and
+then refines the assembly.</p>
+<p>SPAdes runs the modules that are required for a particular dataset
+and it produces the assembly with a minimum of preparation and parameter
+selection - making it very straightforward to produce a decent assembly.
+As with everything in bioinformatics you should try to assess the
+results critically and understand the implications for further
+analysis.</p>
+<pre class="bach"><code>
+spades.py --careful -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly
+-1 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq
+-2 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
+</code></pre>
+<p>Submit the job</p>
+<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_spades.sbatch</code></p>
+<p>Check on job <code>squeue -u biol726310</code></p>
+<p>We are using the SPAdes assembly pipeline and specifiying the
+<code>careful--</code> option to run a mismatch correction algorithm to
+reduce errors. We are also putting the output in the
+<code>-o spades_assembly</code> directory and the read libraries to
+assemble.</p>
+<ol style="list-style-type: decimal">
+<li>Read error correction based on k-mer frequencies using
+BayesHammer.</li>
+<li>De Bruijn graph assembly at multiple k-mer sizes, not just a single
+fixed one.</li>
+<li>Merging of different k-mer assemblies (good for varying
+coverage).</li>
+<li>Scaffolding of contigs from paired end/mate pair reads.</li>
+<li>Repeat resolution from paired end/mate pair data using rectangle
+graphs.</li>
+<li>Contig error correction based on aligning the original reads with
+BWA back to contigs.</li>
+</ol>
+<p>Now we can look at some of the important documents</p>
+<p><strong>1. params.txt</strong></p>
+<ul>
+<li>This file contains a summary of the parameters used for the assembly
+process. This is important because it can be used when publishing the
+genome data.</li>
+</ul>
+<p><strong>2. contigs.fasta</strong></p>
+<ul>
+<li>This contains the final results of the assembly in fasta
+format.</li>
+</ul>
+<p><strong>3. scaffold.fasta</strong></p>
+<ul>
+<li>This contains the final results after scaffolding (using paired end
+information to join contigs together with gaps). There are very few
+large gaps between reads in this case.</li>
+</ul>
+<p><strong>4. assembly_graph.fastg</strong></p>
+<ul>
+<li>Contains SPAdes assembly graph in FASTG format - this is a slightly
+different format that contains more information than fasta - for example
+it can contain alternative alleles in diploid assemblies. We can use the
+bandage program to view the file.</li>
+</ul>
+<p><em>The different folders may have to be searched for the above
+documents.</em> In this case, I was able to find most of the files in
+directory <code>K77</code>.</p>
+</div>
+<div id="assessment-of-assemblies" class="section level2">
+<h2>Assessment of Assemblies</h2>
+<ul>
+<li>We will use the program called - Quality Assessment Tool for Genome
+Assemblies - QUAST to generate some statistics on the assembly.</li>
+</ul>
+<pre class="bach"><code>quast.py --output-dir /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/quast /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/K77/final_contigs.fasta</code></pre>
+<p>Submit the job</p>
+<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_quast.sbatch</code></p>
+<p>Check on job <code>squeue -u biol726310</code></p>
+<p>This will create a directory called ‘quast’ and create some
+statistics on the assembly you produced, don’t worry if the results look
+a little different to the example. We can take a look at the file using
+the <code>cat</code> command, or we can use R to open these files. I
+have included the <strong><a href="data_output/quast_report.html">Quast
+Report</a></strong>.</p>
+<pre><code>cat /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/quast/report.txt</code></pre>
+<pre class="r"><code># Specify the path to your text file
+file_path &lt;- &quot;data_output/quast_report.txt&quot;
+
+# Read the text file
+text_content &lt;- readLines(file_path)
+
+# Print the content of the text file
+cat(text_content, sep = &quot;\n&quot;)</code></pre>
+<pre><code>## All statistics are based on contigs of size &gt;= 500 bp, unless otherwise noted (e.g., &quot;# contigs (&gt;= 0 bp)&quot; and &quot;Total length (&gt;= 0 bp)&quot; include all contigs).
+## 
+## Assembly                    final_contigs
+## # contigs (&gt;= 0 bp)         17           
+## # contigs (&gt;= 1000 bp)      5            
+## # contigs (&gt;= 5000 bp)      4            
+## # contigs (&gt;= 10000 bp)     3            
+## # contigs (&gt;= 25000 bp)     2            
+## # contigs (&gt;= 50000 bp)     0            
+## Total length (&gt;= 0 bp)      97030        
+## Total length (&gt;= 1000 bp)   94891        
+## Total length (&gt;= 5000 bp)   93528        
+## Total length (&gt;= 10000 bp)  88160        
+## Total length (&gt;= 25000 bp)  74276        
+## Total length (&gt;= 50000 bp)  0            
+## # contigs                   5            
+## Largest contig              46850        
+## Total length                94891        
+## GC (%)                      47.95        
+## N50                         27426        
+## N75                         27426        
+## L50                         2            
+## L75                         2            
+## # N&#39;s per 100 kbp           0.00</code></pre>
 </div>
 
 

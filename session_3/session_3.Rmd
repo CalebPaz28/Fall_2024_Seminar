@@ -93,6 +93,7 @@
 - A number of tools are available which also enable to you to quickly search through your reads and assign them to particular taxa or taxonomic groups. These can serve as a quick check to make sure your samples or libraries are not contaminated with DNA from other sources. If you are performing a de-novo assembly, for example, and have DNA sequences present from multiple organisms, you will risk poor results and chimeric contigs.
 
 ## **Aligning Illumina Data to a Reference Sequence**
+
 - Now that we have checked the quality of our raw data, we can begin the process of aligning the trimmed reads against a reference sequence. In this way we can compare how the reference sequence, and the strain we are interested in compare. We will be using **BWA (Burrows-Wheeler aligner)**.
 
 - By mapping reads against a reference, what we mean is that we want to go from a FASTQ file of lots of reads and a FASTA file with a set of contiguous sequences, to another type of file (described later) that lists the reads AND where/if those reads map (align) against the reference.

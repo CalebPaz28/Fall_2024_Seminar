@@ -8,6 +8,8 @@
 
 ## **Assembly of Unmapped Reads**
 
+- Information adopted from Dr. Toomey.
+
 - In the previous chapter we cleaned our data, checked QC metrics, mapped our data to a reference, obtained a list of variants and identyfied an overview of any missing regions.
 
 - we will examine those reads which did not map to the reference genome. We want to know what these sequences represent. Are they novel genes, plasmids or just contamination? To do this we will extract the unmapped reads, evaluate their quality, prepare them for de-novo assembly, assemble them using SPAdes, generate assembly statistics and then produce some annotation via Pfam, BLAST and RAST. 
@@ -32,19 +34,231 @@ mkdir unmapped_assembly
 cd unmapped_assembly
 ```
 
+###  Extract the Unmapped Reads
+
+We want to extract all of the reads that do NOT map to the assembly. Luckily, in the SAM/BAM format there is a special 'bitwise flag' or code that identifies how the reads and their read-mates are aligned to a reference.
+
+We can look at the flags by viewing the first five lines of our BAM file.
+
+```bach
+samtools view /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam | head -n 5
+
+```
+
+
+Now, using the "Decoding SAM flags" tool, can you figure out what flag number we need for reads that are unmapped and where their mates are also unmapped? Click below to reveal the answer.
+
+The answer we were looking for is "12". 
+
+Why? Well, each position from the right of the binary code can be represented in decimal as 1, 2, 4, 6, 8, 16...etc. So, a '1' in the third position from the right in binary is equivalent to a decimal "4". You can then see how this matches to each of the outcomes in the "Decoding SAM flags" tool, e.g. selecting the third box is equivalent to a value of 4!
+
+Remember we wanted "read unmapped" (4) AND "mate unmapped" (8), so selecting both gives us "12" (or 0000001100 in binary), that's all we need.
+
+
+This command outputs a BAM file "-b" and filters only those with a corresponding bit flag of "-f 12".
+
+```bach
+samtools view -b -f 12 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam
+```
+
+Have a look at some of the content of this new BAM file. Reminder: We have to navigate to the folder that contains the `unmapped.bam` file.
+
+```bach
+
+samtools view unmapped.bam | head -n 5
+
+```
+
+For assembly, we need our reads in fastq format, but we need to convert them from the BAM format first.
+
+To convert them we will use the `bamtofastq` program from the `bedtools` package. There are other tools that you can use too, for example in the `Picard` package there is a tool called `SamToFastq` which provides a similar function.
+
+```bach
+
+bedtools bamtofastq -i /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam \
+-fq /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq \
+-fq2 /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
+
+```
+
+We will submit a job to OSCER using the **[bam_to_fasta.sh](scripts/bam_to_fasta.sh)** and **[bam_to_fasta.sbatch](scripts/bam_to_fasta.sbatch)**
+
+
+Submit the job
+`sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/bam_to_fasta.sbatch`
+
+Check on job
+`squeue -u biol726310`
+
+
+### Check the reads
+
+
+```bach
+
+cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly
+
+grep -c "^@SRR" unmapped_r1.fastq unmapped_r2.fastq 
+
+tail -n 4 unmapped_r1.fastq unmapped_r2.fastq 
+
+```
+
+### Evaluate QC
+
+Similar to our RRV project and to previous tasks, we will use the fastqc to check the quality of our data after mapping. We will submit [unmapped_fastqc.sh](scripts/) and [unmapped_fastqc.sbatch](scripts/) files to OSCER.  
+
+```bach
+fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/
+
+fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/
+```
+
+Submit the job
+
+`sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_fastqc.sbatch`
+
+Check on job
+`squeue -u biol726310`
+
+
+We can take a look at the html out files here: [File 1](data_output/unmapped_r1_fastqc.html) and [File 2](data_output/unmapped_r2_fastqc.html).  
+
+
+## De novo Assembly
+
+de novo is a Latin expression meaning "from the beginning," "afresh," "anew," "beginning again.". When we perform a de-novo assembly we try to reconstruct a genome or part of the genome from our reads without making any prior assumptions (in contrast to mapping where we compare our reads to what we think is a close reference sequence).
+
+
+We will be using an assembler called SPAdes. It generally performs pretty well with a variety of genomes. It can also incorporate longer reads produced from PacBio sequencers that we will use later in our adventure.
+
+One big advantage is that it is not just a pure assembler - it is a suite of programs that prepare the reads you have, assembles them and then refines the assembly.
+
+SPAdes runs the modules that are required for a particular dataset and it produces the assembly with a minimum of preparation and parameter selection - making it very straightforward to produce a decent assembly. As with everything in bioinformatics you should try to assess the results critically and understand the implications for further analysis.
+
+
+```bach
+
+spades.py --careful -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly
+-1 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq
+-2 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
+
+```
+
+Submit the job
+
+`sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_spades.sbatch`
+
+Check on job
+`squeue -u biol726310`
+
+
+We are using the SPAdes assembly pipeline and specifiying the `careful--` option to run a mismatch correction algorithm to reduce errors. We are also putting the output in the `-o spades_assembly` directory and the read libraries to assemble. 
+
+1. Read error correction based on k-mer frequencies using BayesHammer.
+2. De Bruijn graph assembly at multiple k-mer sizes, not just a single fixed one.
+3. Merging of different k-mer assemblies (good for varying coverage).
+4. Scaffolding of contigs from paired end/mate pair reads.
+5. Repeat resolution from paired end/mate pair data using rectangle graphs.
+6. Contig error correction based on aligning the original reads with BWA back to contigs.
+
+Now we can look at some of the important documents
+
+**1. params.txt**
+
+- This file contains a summary of the parameters used for the assembly process. This is important because it can be used when publishing the genome data.
+
+**2. contigs.fasta**
+
+- This contains the final results of the assembly in fasta format.
+
+**3. scaffold.fasta**
+
+- This contains the final results after scaffolding (using paired end information to join contigs together with gaps). There are very few large gaps between reads in this case. 
+
+**4. assembly_graph.fastg**
+
+- Contains SPAdes assembly graph in FASTG format - this is a slightly different format that contains more information than fasta - for example it can contain alternative alleles in diploid assemblies. We can use the bandage program to view the file.
+
+
+*The different folders may have to be searched for the above documents.* In this case, I was able to find most of the files in directory `K77`.
+
+
+## Assessment of Assemblies
+
+- We will use the program called - Quality Assessment Tool for Genome Assemblies - QUAST to generate some statistics on the assembly.
+
+
+```bach
+quast.py --output-dir /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/quast /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/K77/final_contigs.fasta
+```
+
+Submit the job
+
+`sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_quast.sbatch`
+
+Check on job
+`squeue -u biol726310`
+
+This will create a directory called 'quast' and create some statistics on the assembly you produced, don’t worry if the results look a little different to the example. We can take a look at the file using the `cat` command, or we can use R to open these files. I have included the **[Quast Report](data_output/quast_report.html)**.   
+
+```
+cat /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/quast/report.txt
+```
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/quast_report.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(text_content, sep = "\n")
+```
+
+The N50 and L50 measures are very important in a normal assembly and we will visit them later, they are not really relevant to this assembly.
+
+You will notice that we have a couple of large contigs greater than 25kb long - what do you think they might be? Also ~12 other contigs longer than 1kb. We need to find out what they are!
+
+
+## Analysing the de novo Assembled Reads
+
+- By analysing, we will be identifying which genes are present, which organism they are from and whether they form part of the main chromosome or are an independent unit (e.g. plasmid). In the case of viruses, we want to see which viruses we are getting hits too (if any). 
+
+We will use three approaches:
+
+1. We will search the nucleotide sequences of the contigs against the NCBI non-redundant database. This will enable us to identify the species to which a given contig matches best (or most closely).
+
+2. We will call open reading frames within the contigs and search those against the Swissprot database of manually curated (i.e. high quality) annotated protein sequences.
+
+3. We will search the open reading frames against the Pfam database of protein families Pfam.
+
+If two sequences share 90% sequence identity over their length, you can be pretty sure they are homologous. If they share 2% they probably aren't. But what if they share 30%? This is the notorious twilight zone of 20-30% sequence identity where it is very difficult to judge whether two proteins are homologous based on sequence alone.
+
+To help overcome this searching more subtle signatures may help – this is where Pfam comes in. Pfam is a database which contains protein families identified by particular signatures or patterns in their protein sequence. These signatures are modeled by Hidden Markov Models (HMMs) and used to search query sequences. These can provide a high level annotation where BLAST might otherwise fail. It also has the advantage of being much faster than BLAST.
+
+### Search Contigs against NCBI nucleotide Database
+
+To do this we will use the command line version of the Basic Local Alignment Search Tool (BLAST+), which finds regions of similarity between biological sequences. The program compares nucleotide or protein sequences to sequence databases and calculates the statistical significance.
+
+We will use the database commonly denoted as 'nt' - the nucleotide database is a collection of sequences from several sources, including GenBank, RefSeq, TPA and PDB including genome, gene, and transcript sequences.
+
+The following command executes a nucleotide BLAST search (using 'blastn' for nucleotides) of the sequences in the 'contigs.fasta' file against the 'nt' database. ⚠️⛔ PLEASE DO NOT RUN THIS! 🚫⚠️. Remember the notation with "" is just to make it easier to read here, you don't have to type them. Not that we will this time anyway.
+
+I cannot get this to work
+```bach
+blastn -query seq.fasta -db nt -evalue 1e-06 -num_threads 4 -num_alignments 10 -num_descriptions 10 -out contigs.fasta.blastn
+```
 
 
 
 
 
+The reason I stress to not run this is that blast can be somewhat slow, and would require too much downtime in our adventure. Nevertheless, the command is there so you can understand what you would do to run one of your own. 
 
-
-
-
-
-
-
-
-
-
-
+'-db' - the prepared blast database to search
+'-evalue' - apply an e-value (expectation value) cutoff (read more here🔍), here a cutoff of 1e-06 to limit ourselves to statistically significant hits (i.e. in this case 1 in 1 million likelihood of a hit to a database of this size by a sequence of this length).
+'-num_alignments' and '-num_descriptions' - options tell blastn to only display the top 10 results for each hit
+'-num_threads' - use 4 CPU cores
+'-out' - the file in which to place the output

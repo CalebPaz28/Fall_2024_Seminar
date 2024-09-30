@@ -1,5 +1,63 @@
 
 ## Notes taken during the lecture portion of the course
 
+How can we judge the quality of assemblies that we have made? This is through genome evalutation.
+
+Approaches: 
+1) Contig size and number
+- Quast
+- Bandage
+
+2) K-mer spectrum (how good is our data going in)
+- Jellyfish and Genomescope
+
+Assess quality of the sequencing library
+Infer properties of the genome
+ - size
+ - ploidy
+ - heterozygosity
+ - Useful for genomes (no so much for transcriptomes)
+
+3) Completeness
+- Quast - compare to known reference
+- BUSCO (genes common among most taxa)
+
+Orthology: Gene in different species that originated from a common ancestor and were seperated by speciation events.
+
+Analysis relies on comparisions of genome 
+
+How it works:
+- Like a blast search
+- complete (single-copy or duplciated match)
+
+A good assembly will usually have >95% complete BUSCO genes.
+
+This can also be run on transcriptome assemblies
+
+
+
+
+Assembly Stats
+Genome size: Total number of bases in genome assembly
+
+Contig/scaffold nummbers: Total number of assembled elements
+- Ideally: number of whole chromosomes
+
+Coverage - average read depth across the assembly
+
+Major stats:
+
+**N50**: 50% of the nucleotides in the genome are contained in contigs that are greater than or equal to this length
+
+**L50**: Minimum number of contigs needed to contain 50% of the genome
+
+
+We will use Quast (run this on the contigs file)
+- compare multiple assemblies and to a reference
+
+
+
+
+
 
 

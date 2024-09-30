@@ -354,6 +354,44 @@ display: none;
 
 <div id="notes-taken-during-the-lecture-portion-of-the-course" class="section level2">
 <h2>Notes taken during the lecture portion of the course</h2>
+<p>How can we judge the quality of assemblies that we have made? This is
+through genome evalutation.</p>
+<p>Approaches: 1) Contig size and number - Quast - Bandage</p>
+<ol start="2" style="list-style-type: decimal">
+<li>K-mer spectrum (how good is our data going in)</li>
+</ol>
+<ul>
+<li>Jellyfish and Genomescope</li>
+</ul>
+<p>Assess quality of the sequencing library Infer properties of the
+genome - size - ploidy - heterozygosity - Useful for genomes (no so much
+for transcriptomes)</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Completeness</li>
+</ol>
+<ul>
+<li>Quast - compare to known reference</li>
+<li>BUSCO (genes common among most taxa)</li>
+</ul>
+<p>Orthology: Gene in different species that originated from a common
+ancestor and were seperated by speciation events.</p>
+<p>Analysis relies on comparisions of genome</p>
+<p>How it works: - Like a blast search - complete (single-copy or
+duplciated match)</p>
+<p>A good assembly will usually have &gt;95% complete BUSCO genes.</p>
+<p>This can also be run on transcriptome assemblies</p>
+<p>Assembly Stats Genome size: Total number of bases in genome
+assembly</p>
+<p>Contig/scaffold nummbers: Total number of assembled elements -
+Ideally: number of whole chromosomes</p>
+<p>Coverage - average read depth across the assembly</p>
+<p>Major stats:</p>
+<p><strong>N50</strong>: 50% of the nucleotides in the genome are
+contained in contigs that are greater than or equal to this length</p>
+<p><strong>L50</strong>: Minimum number of contigs needed to contain 50%
+of the genome</p>
+<p>We will use Quast (run this on the contigs file) - compare multiple
+assemblies and to a reference</p>
 </div>
 
 
