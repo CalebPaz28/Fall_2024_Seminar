@@ -1,0 +1,102 @@
+# pfam_scan.pl,  run at Thu Oct  3 08:50:13 2024
+#
+# Copyright (c) 2009 Genome Research Ltd
+# Freely distributed under the GNU 
+# General Public License
+#
+# Authors: Jaina Mistry (jaina@ebi.ac.uk), 
+#          Rob Finn (rdf@ebi.ac.uk)
+#
+# This is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>. 
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#      query sequence file: /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.orf.fasta
+#     cpu number specified: 4
+#        searching against: /scratch/biol726310/BIOL7263_Genomics/db/pfam//Pfam-A.hmm, with cut off --cut_ga
+#    resolve clan overlaps: on
+#     predict active sites: on
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#
+# <seq id> <alignment start> <alignment end> <envelope start> <envelope end> <hmm acc> <hmm name> <type> <hmm start> <hmm end> <hmm length> <bit score> <E-value> <significance> <clan> <predicted_active_site_residues>
+
+NODE_1_length_46850_cov_69.441152_12      18    138     17    139 PF01850.26  PIN               Domain     2   119   120     75.0   8.8e-21   1 CL0280   
+NODE_1_length_46850_cov_69.441152_54      76    185     75    193 PF01464.25  SLT               Domain     2   108   117     76.7   1.2e-21   1 CL0037   predicted_active_site
+NODE_1_length_46850_cov_69.441152_81      89    224     88    226 PF06924.16  DUF1281           Family     2   140   179     90.4   1.6e-25   1 No_clan  
+NODE_1_length_46850_cov_69.441152_82      53    126     53    138 PF18406.6   DUF1281_C         Domain     1    74    88     56.5   2.3e-15   1 No_clan  
+NODE_1_length_46850_cov_69.441152_86      53    233     53    235 PF01555.23  N6_N4_Mtase       Family     1   219   221    135.1   4.2e-39   1 CL0063   
+NODE_1_length_46850_cov_69.441152_87      52    187     52    187 PF07128.17  DUF1380           Family     1   137   137    170.6   2.1e-50   1 No_clan  
+NODE_1_length_46850_cov_69.441152_91      51    147     50    147 PF03230.18  Antirestrict      Family     2    92    92     91.9   2.6e-26   1 No_clan  
+NODE_1_length_46850_cov_69.441152_94      41    143     41    147 PF00436.30  SSB               Domain     1   100   104    123.7   3.3e-36   1 CL0021   
+NODE_1_length_46850_cov_69.441152_96      60    154     59    155 PF02195.23  ParBc             Family     2    89    90     53.7   2.1e-14   1 CL0248   
+NODE_1_length_46850_cov_69.441152_97      21    158     21    158 PF06290.16  PsiB              Family     1   139   139    208.5   3.4e-62   1 No_clan  
+NODE_1_length_46850_cov_69.441152_98      17    248     14    249 PF06952.16  PsiA              Family     4   236   237    133.0   1.2e-38   1 No_clan  
+NODE_1_length_46850_cov_69.441152_100     61    101     60    101 PF01848.21  HOK_GEF           Family     2    42    42     72.0   2.6e-20   1 No_clan  
+NODE_1_length_46850_cov_69.441152_104     71    297     71    297 PF06067.16  DUF932            Family     1   227   227    180.3   5.8e-53   1 No_clan  
+NODE_1_length_46850_cov_69.441152_105      3    127      3    128 PF05261.16  Tra_M             Family     1   125   126    233.5   6.4e-70   1 CL0548   
+NODE_1_length_46850_cov_69.441152_107     25     68     23     71 PF05509.16  TraY              Domain     3    46    49     51.8   7.8e-14   1 CL0057   
+NODE_1_length_46850_cov_69.441152_107     79    126     79    127 PF05509.16  TraY              Domain     1    48    49     76.4   1.5e-21   1 CL0057   
+NODE_1_length_46850_cov_69.441152_108      2    120      2    120 PF05513.16  TraA              Family     1   118   118    224.5   2.7e-67   1 No_clan  
+NODE_1_length_46850_cov_69.441152_109     53    144     53    144 PF07178.16  TraL              Family     1    90    90    100.9   4.3e-29   1 No_clan  
+NODE_1_length_46850_cov_69.441152_110      6    187      6    187 PF05309.16  TraE              Family     1   182   182    184.1     2e-54   1 No_clan  
+NODE_1_length_46850_cov_69.441152_111     27    244     20    244 PF06586.16  TraK              Family     7   228   228    154.9   2.7e-45   1 No_clan  
+NODE_1_length_46850_cov_69.441152_112    218    414    218    414 PF03743.19  TrbI              Family     1   188   188     94.2   1.1e-26   1 No_clan  
+NODE_1_length_46850_cov_69.441152_113     15    210     15    210 PF07296.16  TraP              Family     1   202   202    319.4   7.4e-96   1 No_clan  
+NODE_1_length_46850_cov_69.441152_115     27    167     26    167 PF09676.15  TraV              Family     2   128   128     76.3   5.2e-21   1 No_clan  
+NODE_1_length_46850_cov_69.441152_117     41    279     41    279 PF11130.13  TraC_F_IV         Family     1   231   231    166.6   7.7e-49   1 No_clan  
+NODE_1_length_46850_cov_69.441152_117    292    449    290    454 PF19357.4   DUF5934           Family     3   157   172     64.3   1.1e-17   1 No_clan  
+NODE_1_length_46850_cov_69.441152_117    470    774    462    855 PF19044.5   P-loop_TraG       Family    14   327   413     96.7   1.4e-27   1 CL0023   
+NODE_1_length_46850_cov_69.441152_118     26    130     25    130 PF09677.15  TrbI_Ftype        Family     2   106   106    121.6   2.1e-35   1 No_clan  
+NODE_1_length_46850_cov_69.441152_119     51     77     49     77 PF12477.13  TraW_N            Family     3    29    30     42.3   6.3e-11   1 No_clan  
+NODE_1_length_46850_cov_69.441152_120     55    355     55    357 PF06834.16  TraU              Family     1   304   306    366.2  1.7e-109   1 No_clan  
+NODE_1_length_46850_cov_69.441152_121     95    173     95    201 PF09673.15  TrbC_Ftype        Family     1    80   111     66.3   2.7e-18   1 No_clan  
+NODE_1_length_46850_cov_69.441152_122    317    562    315    562 PF06986.16  F_T4SS_TraN       Family     3   240   240    267.9   9.5e-80   1 No_clan  
+NODE_1_length_46850_cov_69.441152_123     39    253     39    253 PF13728.11  TraF              Family     1   224   224    233.8   2.6e-69   1 CL0172   
+NODE_1_length_46850_cov_69.441152_125     81    166     74    175 PF13728.11  TraF              Family   133   214   224     41.8   1.3e-10   1 CL0172   
+NODE_1_length_46850_cov_69.441152_128     34    382     34    382 PF06122.16  TraH              Family     1   358   358    372.7  2.7e-111   1 No_clan  
+NODE_1_length_46850_cov_69.441152_129     55    496     55    500 PF07916.16  TraG_N            Family     1   458   462    385.1    6e-115   1 No_clan  
+NODE_1_length_46850_cov_69.441152_131     40    251     40    251 PF05818.17  TraT              Family     1   214   214    278.5   4.4e-83   1 No_clan  
+NODE_1_length_46850_cov_69.441152_132     44    140     44    140 PF12615.13  TraD_N            Family     1    92    92    119.7   9.6e-35   1 No_clan  
+NODE_1_length_46850_cov_69.441152_132    184    573    183    573 PF10412.14  TrwB_AAD_bind     Domain     2   387   387    390.8  7.4e-117   1 CL0023   
+NODE_1_length_46850_cov_69.441152_134     20    293     20    294 PF08751.16  TrwC              Domain     1   285   286    262.9   4.9e-78   1 CL0169   
+NODE_1_length_46850_cov_69.441152_134    448    546    448    546 PF22232.1   TraI_hel_assoc_N  Domain     1    99    99    118.4   2.1e-34   1 CL0023   
+NODE_1_length_46850_cov_69.441152_134    585    635    585    636 PF18272.6   ssDNA_TraI_N      Domain     1    51    53     86.2   1.3e-24   1 No_clan  
+NODE_1_length_46850_cov_69.441152_134    643    722    643    722 PF18340.6   TraI_2B           Domain     1    79    79    109.2   8.5e-32   1 CL0010   
+NODE_1_length_46850_cov_69.441152_134    979   1164    978   1169 PF13604.11  AAA_30            Domain     2   179   191    120.1   1.1e-34   1 CL0023   
+NODE_1_length_46850_cov_69.441152_134   1475   1632   1475   1632 PF07057.16  TraI_C            Domain     1   154   154    140.2   5.7e-41   1 CL0413   
+NODE_1_length_46850_cov_69.441152_135     94    308     94    309 PF05857.16  TraX              Family     1   216   217    213.0   5.5e-63   1 CL0316   
+NODE_1_length_46850_cov_69.441152_136     19     80     19     81 PF12602.13  FinO_N            Family     1    62    63    129.5   3.9e-38   1 No_clan  
+NODE_1_length_46850_cov_69.441152_136     92    149     88    150 PF04352.18  ProQ              Domain     5    61   109     38.3   1.3e-09   1 No_clan  
+NODE_2_length_27426_cov_77.124100_5       39    342     38    345 PF07693.19  KAP_NTPase        Domain     2   290   293    147.5   5.8e-43   1 CL0023   
+NODE_2_length_27426_cov_77.124100_10     130    240    107    241 PF01051.26  Rep3_N            Domain    39   140   141     42.1   1.3e-10   1 CL0123   
+NODE_2_length_27426_cov_77.124100_14     955   1059    951   1059 PF18883.5   AC_1              Repeat     5   114   114     88.9   2.5e-25   1 CL0268   
+NODE_2_length_27426_cov_77.124100_14    1140   1399   1140   1400 PF03797.24  Autotransporter   Domain     1   254   255    135.0   4.4e-39   1 CL0193   
+NODE_2_length_27426_cov_77.124100_23      35    321     34    321 PF01278.25  Omptin            Family     2   283   283    404.9  1.8e-121   1 CL0193   predicted_active_site
+NODE_2_length_27426_cov_77.124100_24     103    469    101    474 PF00561.25  Abhydrolase_1     Domain     3   240   245    121.9     4e-35   1 CL0028   predicted_active_site
+NODE_2_length_27426_cov_77.124100_25      52    217     45    219 PF00589.27  Phage_integrase   Family     9   169   172     54.1   1.9e-14   1 CL0382   
+NODE_2_length_27426_cov_77.124100_32     174    292    174    293 PF10137.14  CAP12-PCTIR_TIR   Domain     1   118   119    126.1   8.2e-37   1 CL0173   
+NODE_2_length_27426_cov_77.124100_39      14    112     14    112 PF01845.22  CcdB              Domain     1   101   101    110.8   3.7e-32   1 CL0010   
+NODE_2_length_27426_cov_77.124100_40      51    240     50    243 PF00589.27  Phage_integrase   Family     2   168   172     62.3   5.7e-17   1 CL0382   
+NODE_2_length_27426_cov_77.124100_41      32    184     31    184 PF01051.26  Rep3_N            Domain     2   141   141    106.5   1.7e-30   1 CL0123   
+NODE_2_length_27426_cov_77.124100_41     198    256    198    256 PF21205.2   Rep3_C            Domain     1    59    59     61.3   9.3e-17   1 CL0123   
+NODE_2_length_27426_cov_77.124100_42     112    290    111    296 PF13614.11  AAA_31            Domain     3   169   177     96.2   2.5e-27   1 CL0023   
+NODE_2_length_27426_cov_77.124100_44      78    154     70    155 PF02195.23  ParBc             Family    10    89    90     49.1   5.6e-13   1 CL0248   
+NODE_2_length_27426_cov_77.124100_44     159    233    159    233 PF18090.6   SoPB_HTH          Domain     1    75    75    142.3   4.6e-42   1 CL0123   
+NODE_3_length_13884_cov_91.221337_3       73    168     73    170 PF04519.18  Bactofilin        Repeat     1    96    98     68.1   7.2e-19   1 CL0268   
+NODE_3_length_13884_cov_91.221337_5       33     82     32     85 PF00196.24  GerE              Domain     3    52    57     30.5   2.5e-07   1 CL0123   
+NODE_3_length_13884_cov_91.221337_5      124    344    119    344 PF00563.25  EAL               Domain    14   236   236    101.5   5.3e-29   1 CL0276   
+NODE_3_length_13884_cov_91.221337_8       38    172     37    173 PF00239.26  Resolvase         Domain     2   144   145    139.5     1e-40   1 No_clan  predicted_active_site
+NODE_3_length_13884_cov_91.221337_8      175    215    175    216 PF02796.20  HTH_7             Domain     1    44    45     35.0   1.4e-08   1 CL0123   
+NODE_3_length_13884_cov_91.221337_13      62    103     62    103 PF01848.21  HOK_GEF           Family     1    42    42     34.2   1.8e-08   1 No_clan  
+NODE_3_length_13884_cov_91.221337_17      12    179     12    180 PF13700.11  DUF4158           Domain     1   164   165    183.2   4.1e-54   1 No_clan  
+NODE_3_length_13884_cov_91.221337_17     594    983    594    983 PF01526.22  DDE_Tnp_Tn3       Domain     1   389   389    496.9  3.9e-149   1 CL0219   
+NODE_4_length_5368_cov_74.957475_1       517    602    463    603 PF03212.19  Pertactin         Repeat    45   120   121     22.8   8.5e-05   1 CL0268   
+NODE_5_length_1363_cov_71.788491_3        67    110     67    111 PF13005.12  zf-IS66           Domain     1    45    46     43.4     4e-11   1 No_clan  
+NODE_5_length_1363_cov_71.788491_5        12    140      4    141 PF03050.19  DDE_Tnp_IS66      Family   109   237   284    116.6   1.6e-33   1 CL0219   

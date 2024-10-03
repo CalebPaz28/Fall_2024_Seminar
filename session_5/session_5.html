@@ -376,11 +376,11 @@ then produce some annotation via Pfam, BLAST and RAST.</p></li>
 <ol style="list-style-type: decimal">
 <li>Login to OSCER</li>
 </ol>
-<p><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></p>
+<pre class="bach"><code>ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Activate environment</li>
 </ol>
-<p><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></p>
+<pre class="bach"><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></pre>
 <ol start="3" style="list-style-type: decimal">
 <li></li>
 </ol>
@@ -392,15 +392,14 @@ mkdir unmapped_assembly
 
 cd unmapped_assembly</code></pre>
 <div id="extract-the-unmapped-reads" class="section level3">
-<h3>Extract the Unmapped Reads</h3>
+<h3><strong>Extract the Unmapped Reads</strong></h3>
 <p>We want to extract all of the reads that do NOT map to the assembly.
 Luckily, in the SAM/BAM format there is a special ‘bitwise flag’ or code
 that identifies how the reads and their read-mates are aligned to a
 reference.</p>
 <p>We can look at the flags by viewing the first five lines of our BAM
 file.</p>
-<pre class="bach"><code>samtools view /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam | head -n 5
-</code></pre>
+<pre class="bach"><code>samtools view /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/mapping_to_reference/ecoli_mapped_namesort_fixmate_sort_markdup.bam | head -n 5</code></pre>
 <p>Now, using the “Decoding SAM flags” tool, can you figure out what
 flag number we need for reads that are unmapped and where their mates
 are also unmapped? Click below to reveal the answer.</p>
@@ -420,51 +419,47 @@ corresponding bit flag of “-f 12”.</p>
 <p>Have a look at some of the content of this new BAM file. Reminder: We
 have to navigate to the folder that contains the
 <code>unmapped.bam</code> file.</p>
-<pre class="bach"><code>
-samtools view unmapped.bam | head -n 5
-</code></pre>
+<pre class="bach"><code>samtools view unmapped.bam | head -n 5</code></pre>
 <p>For assembly, we need our reads in fastq format, but we need to
 convert them from the BAM format first.</p>
 <p>To convert them we will use the <code>bamtofastq</code> program from
 the <code>bedtools</code> package. There are other tools that you can
 use too, for example in the <code>Picard</code> package there is a tool
 called <code>SamToFastq</code> which provides a similar function.</p>
-<pre class="bach"><code>
-bedtools bamtofastq -i /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam \
+<pre class="bach"><code>bedtools bamtofastq -i /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped.bam \
 -fq /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq \
--fq2 /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
-</code></pre>
+-fq2 /scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq</code></pre>
 <p>We will submit a job to OSCER using the <strong><a href="scripts/bam_to_fasta.sh">bam_to_fasta.sh</a></strong> and
 <strong><a href="scripts/bam_to_fasta.sbatch">bam_to_fasta.sbatch</a></strong></p>
-<p>Submit the job
-<code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/bam_to_fasta.sbatch</code></p>
-<p>Check on job <code>squeue -u biol726310</code></p>
+<p>Submit the job</p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/bam_to_fasta.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
 </div>
 <div id="check-the-reads" class="section level3">
-<h3>Check the reads</h3>
-<pre class="bach"><code>
-cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly
+<h3><strong>Check the reads</strong></h3>
+<pre class="bach"><code>cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly
 
 grep -c &quot;^@SRR&quot; unmapped_r1.fastq unmapped_r2.fastq 
 
-tail -n 4 unmapped_r1.fastq unmapped_r2.fastq 
-</code></pre>
+tail -n 4 unmapped_r1.fastq unmapped_r2.fastq </code></pre>
 </div>
 <div id="evaluate-qc" class="section level3">
-<h3>Evaluate QC</h3>
+<h3><strong>Evaluate QC</strong></h3>
 <p>Similar to our RRV project and to previous tasks, we will use the
 fastqc to check the quality of our data after mapping. We will submit <a href="scripts/">unmapped_fastqc.sh</a> and <a href="scripts/">unmapped_fastqc.sbatch</a> files to OSCER.</p>
 <pre class="bach"><code>fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/
 
 fastqc /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/</code></pre>
 <p>Submit the job</p>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_fastqc.sbatch</code></p>
-<p>Check on job <code>squeue -u biol726310</code></p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_fastqc.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
 <p>We can take a look at the html out files here: <a href="data_output/unmapped_r1_fastqc.html">File 1</a> and <a href="data_output/unmapped_r2_fastqc.html">File 2</a>.</p>
 </div>
 </div>
 <div id="de-novo-assembly" class="section level2">
-<h2>De novo Assembly</h2>
+<h2><strong>De novo Assembly</strong></h2>
 <p>de novo is a Latin expression meaning “from the beginning,” “afresh,”
 “anew,” “beginning again.”. When we perform a de-novo assembly we try to
 reconstruct a genome or part of the genome from our reads without making
@@ -483,14 +478,13 @@ selection - making it very straightforward to produce a decent assembly.
 As with everything in bioinformatics you should try to assess the
 results critically and understand the implications for further
 analysis.</p>
-<pre class="bach"><code>
-spades.py --careful -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly
+<pre class="bach"><code>spades.py --careful -o /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly
 -1 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r1.fastq
--2 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq
-</code></pre>
+-2 /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/unmapped_r2.fastq</code></pre>
 <p>Submit the job</p>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_spades.sbatch</code></p>
-<p>Check on job <code>squeue -u biol726310</code></p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_spades.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
 <p>We are using the SPAdes assembly pipeline and specifiying the
 <code>careful--</code> option to run a mismatch correction algorithm to
 reduce errors. We are also putting the output in the
@@ -539,15 +533,19 @@ documents.</em> In this case, I was able to find most of the files in
 directory <code>K77</code>.</p>
 </div>
 <div id="assessment-of-assemblies" class="section level2">
-<h2>Assessment of Assemblies</h2>
+<h2><strong>Assessment of Assemblies</strong></h2>
 <ul>
 <li>We will use the program called - Quality Assessment Tool for Genome
-Assemblies - QUAST to generate some statistics on the assembly.</li>
+Assemblies - QUAST to generate some statistics on the assembly. The
+<strong><a href="scripts/unmapped_quast.sh">sh</a></strong> and
+<strong><a href="scripts/unmapped_quast.sbatch">sbatch</a></strong>
+files are linked accordingly.</li>
 </ul>
 <pre class="bach"><code>quast.py --output-dir /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/quast /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/K77/final_contigs.fasta</code></pre>
 <p>Submit the job</p>
-<p><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_quast.sbatch</code></p>
-<p>Check on job <code>squeue -u biol726310</code></p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_quast.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
 <p>This will create a directory called ‘quast’ and create some
 statistics on the assembly you produced, don’t worry if the results look
 a little different to the example. We can take a look at the file using
@@ -587,6 +585,180 @@ cat(text_content, sep = &quot;\n&quot;)</code></pre>
 ## L50                         2            
 ## L75                         2            
 ## # N&#39;s per 100 kbp           0.00</code></pre>
+<p>The N50 and L50 measures are very important in a normal assembly and
+we will visit them later, they are not really relevant to this
+assembly.</p>
+<p>You will notice that we have a couple of large contigs greater than
+25kb long - what do you think they might be? Also ~12 other contigs
+longer than 1kb. We need to find out what they are!</p>
+</div>
+<div id="analysing-the-de-novo-assembled-reads" class="section level2">
+<h2><strong>Analysing the de novo Assembled Reads</strong></h2>
+<ul>
+<li>By analyzing, we will be identifying which genes are present, which
+organism they are from and whether they form part of the main chromosome
+or are an independent unit (e.g. plasmid). In the case of viruses, we
+want to see which viruses we are getting hits too (if any).</li>
+</ul>
+<p>We will use three approaches:</p>
+<ol style="list-style-type: decimal">
+<li><p>We will search the nucleotide sequences of the contigs against
+the NCBI non-redundant database. This will enable us to identify the
+species to which a given contig matches best (or most closely).</p></li>
+<li><p>We will call open reading frames within the contigs and search
+those against the Swissprot database of manually curated (i.e. high
+quality) annotated protein sequences.</p></li>
+<li><p>We will search the open reading frames against the Pfam database
+of protein families Pfam.</p></li>
+</ol>
+<p>If two sequences share 90% sequence identity over their length, you
+can be pretty sure they are homologous. If they share 2% they probably
+aren’t. But what if they share 30%? This is the notorious twilight zone
+of 20-30% sequence identity where it is very difficult to judge whether
+two proteins are homologous based on sequence alone.</p>
+<p>To help overcome this searching more subtle signatures may help –
+this is where Pfam comes in. Pfam is a database which contains protein
+families identified by particular signatures or patterns in their
+protein sequence. These signatures are modeled by Hidden Markov Models
+(HMMs) and used to search query sequences. These can provide a high
+level annotation where BLAST might otherwise fail. It also has the
+advantage of being much faster than BLAST.</p>
+<div id="search-contigs-against-ncbi-nucleotide-database" class="section level3">
+<h3><strong>Search Contigs against NCBI nucleotide
+Database</strong></h3>
+<p>To do this we will use the command line version of the Basic Local
+Alignment Search Tool (BLAST+), which finds regions of similarity
+between biological sequences. The program compares nucleotide or protein
+sequences to sequence databases and calculates the statistical
+significance.</p>
+<p>We will use the database commonly denoted as ‘nt’ - the nucleotide
+database is a collection of sequences from several sources, including
+GenBank, RefSeq, TPA and PDB including genome, gene, and transcript
+sequences.</p>
+<p>The following command executes a nucleotide BLAST search (using
+‘blastn’ for nucleotides) of the sequences in the ‘contigs.fasta’ file
+against the ‘nt’ database. Remember the notation with “” is just to make
+it easier to read here, you don’t have to type them. Not that we will
+this time anyway.</p>
+<blockquote>
+<p>I cannot get this to work when attempting to run it in the command
+line.</p>
+</blockquote>
+<pre class="bach"><code>blastn -query seq.fasta -db nt -evalue 1e-06 -num_threads 4 -num_alignments 10 -num_descriptions 10 -out contigs.fasta.blastn</code></pre>
+<p>The reason I stress to not run this is that blast can be somewhat
+slow, and would require too much downtime in our adventure.
+Nevertheless, the command is there so you can understand what you would
+do to run one of your own.</p>
+<p>‘-db’ - the prepared blast database to search ‘-evalue’ - apply an
+e-value (expectation value) cutoff (read more here🔍), here a cutoff of
+1e-06 to limit ourselves to statistically significant hits (i.e. in this
+case 1 in 1 million likelihood of a hit to a database of this size by a
+sequence of this length). ‘-num_alignments’ and ‘-num_descriptions’ -
+options tell blastn to only display the top 10 results for each hit
+‘-num_threads’ - use 4 CPU cores ‘-out’ - the file in which to place the
+output</p>
+<p>The precomputed data can be view: <strong><a href="precomputed_data/contigs.fasta.blastn">here</a></strong>.</p>
+<p>We can view the data using the following line of code.</p>
+<pre class="bach"><code>nano /scratch/mbtoomey/BIOL7263_Genomics/precomputed/unmapped_assembly/spades_assembly/contigs.fasta.blastn</code></pre>
+<p>This is the standard blast output format. It shows you the hits for
+each query sequence, and the alignments of the sequences. It is somewhat
+similar to the webserver version but in text format.</p>
+<pre class="bach"><code>blastn -db /databases/ncbi/nt/2020-10-15/nt -query contigs.fasta -evalue 1e-06 -num_threads 4 -num_alignments 10 -num_descriptions 10 -outfmt &#39;6 std stitle&#39; -outcontigs.fasta.blastn6</code></pre>
+<p>Here you can see we have added the option “-outfmt ‘6 std stitle’”
+which changes the output to a table and includes the standard
+information of e-value and query hit along with the title of the blast
+hit.</p>
+</div>
+</div>
+<div id="obtaining-open-reading-frames" class="section level2">
+<h2><strong>Obtaining open reading frames</strong></h2>
+<p>We can call the EMBOSS package program ‘getorf’ to search the contigs
+for start and stop codons. These are usually identified by searching for
+regions without stop codons.</p>
+<p>We will use codon table 11 which defines the bacterial codon usage
+and restrict ORFs to sequences longer than 300 nucleotides.</p>
+<pre class="bach"><code>getorf -table 11 -circular N -minsize 300 -sequence
+/scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.fasta -outseq
+/scratch/mbtoomey/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.orf.fasta</code></pre>
+<p>The <strong><a href="scripts/unmapped_orf.sh">sh</a></strong> and
+<strong><a href="scripts/unmapped_orf.sbatch">sbatch</a></strong> files
+are linked accordingly.</p>
+<p>Activate environment</p>
+<pre class="bach"><code>mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics</code></pre>
+<p>Submit the job</p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_orf.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
+<pre class="r"><code># Specify the path to your text file
+file_path &lt;- &quot;data_output/contigs.orf.fasta&quot;
+
+# Read the text file
+text_content &lt;- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, sep = &quot;\n&quot;, n = 10))</code></pre>
+<pre><code>## &gt;NODE_1_length_46850_cov_69.441152_1 [345 - 644]  WFSGCGQASPLLSSASVSVPVASALSCCVLPLTNHPLAAKDTTPVTAPERPAQPDDRHRT SGKSLRARNGIIISLHTTPDQRSAPSSQGRLQPPHHWWQG &gt;NODE_1_length_46850_cov_69.441152_2 [562 - 1038]  FPCTRHQTNGQHRHHKAGYSRRITGGKVKRRNHGQQASDKHQTFHSVFRPVQPVADSQHQ QPGNAVTGAGQRPPQCHHENGRCSTPPTARFTPCQHLCRHCKGKQDIPLIPGKAGKVIPE LGKNCPSPQPVNGQLPDMRMTGQIQPPHQGKQRKGPAPG &gt;NODE_1_length_46850_cov_69.441152_3 [983 - 1900]  RDRFSPHTRANSGKAPRPARNIHDWSRCRIRFAWSRTISTSATVLMISRCPGDQTSNDCN QVSVRATSESLRVVFVLSVVISVCLPVSVSTQGFLFLQVADHIPLHLLKSLLQQIFPGNF</code></pre>
+<div id="additional-checks" class="section level3">
+<h3><strong>Additional checks</strong></h3>
+<p>Check that the contigs do not appear in the reference sequence. In
+theory, the unmapped reads used to generate the contigs should not
+assemble into something which will map against the genome. However, it
+is always possible (especially with more complex genomes), that this
+might happen.</p>
+<p>we can use the BLAST+ package in a different mode to compare two
+sequences against each other. Unlike the previous examples where we have
+searched against a database of sequences, here we are doing a simple
+search of the contigs against the reference genome.</p>
+<p>I have included the <strong><a href="scripts/unmapped_blastn.sbatch">sbatch</a></strong> and <strong><a href="scripts/unmapped_blastn.sh">sh</a></strong> files that were
+submitted to OSCER.</p>
+<p>In the records above the e-values are very significant; however,
+since our subject sequence is now very small and we know that it is
+related to our strain, it is not surprising that there are some hits. We
+should only be concerned about whole contigs that map closely to the
+reference genome.</p>
+</div>
+</div>
+<div id="running-the-open-reading-frames-through-pfam_scan" class="section level2">
+<h2><strong>Running the open reading frames through
+pfam_scan</strong></h2>
+<ul>
+<li>Pfam is a database of protein families. They are grouped together
+using a number of criteria based on their function. Pfam-A is
+high-quality manual curation and consists of around 20,000 families.
+Pfam-B is full of automated predictions which may be informative but
+should not be relied upon without additional evidence.</li>
+</ul>
+<p>Before we can use Pfam-A we will need to make sure the database is
+ready to go. This step won’t take too long, and it’s a bit like when we
+index BAM files, except we use the program ‘hmmpress’.</p>
+<pre class="bach"><code>hmmpress /scratch/biol726310/BIOL7263_Genomics/db/pfam/pfam-A.hmm</code></pre>
+<pre class="bach"><code>pfam_scan.pl -fasta /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.orf.fasta -dir /scratch/biol726310/BIOL7263_Genomics/db/pfam/ -outfile /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.orf.pfam -cpu 4 -as</code></pre>
+<p>The code above was added to <strong><a href="scripts/unmapped_pfam.sh">sh</a></strong> and <strong><a href="scripts/unmapped_pfam.sbatch">sbatch</a></strong> files for
+submission to the OSCER system.</p>
+<p>Submit the job</p>
+<pre class="bach"><code>sbatch /home/biol726310/BIOL7263_Genomics/scripts/unmapped/unmapped_pfam.sbatch</code></pre>
+<p>Check on job</p>
+<pre class="bach"><code>squeue -u biol726310</code></pre>
+<p>The out put will look like this <strong><a href="data_output/contigs.orf.pfam">contigs.orf.pfam</a></strong>.</p>
+<pre class="r"><code># Specify the path to your text file
+file_path &lt;- &quot;data_output/contigs.orf.pfam&quot;
+
+# Read the text file
+text_content &lt;- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, sep = &quot;\n&quot;, n = 40))</code></pre>
+<pre><code>## # pfam_scan.pl,  run at Thu Oct  3 08:50:13 2024 # # Copyright (c) 2009 Genome Research Ltd # Freely distributed under the GNU  # General Public License # # Authors: Jaina Mistry (jaina@ebi.ac.uk),  #          Rob Finn (rdf@ebi.ac.uk) # # This is free software; you can redistribute it and/or modify it under # the terms of the GNU General Public License as published by the Free Software # Foundation; either version 2 of the License, or (at your option) any later version. # This program is distributed in the hope that it will be useful, but WITHOUT # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS # FOR A PARTICULAR PURPOSE. See the GNU General Public License for more # details. # # You should have received a copy of the GNU General Public License along with # this program. If not, see &lt;http://www.gnu.org/licenses/&gt;.  # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = #      query sequence file: /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.orf.fasta #     cpu number specified: 4 #        searching against: /scratch/biol726310/BIOL7263_Genomics/db/pfam//Pfam-A.hmm, with cut off --cut_ga #    resolve clan overlaps: on #     predict active sites: on # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = # # &lt;seq id&gt; &lt;alignment start&gt; &lt;alignment end&gt; &lt;envelope start&gt; &lt;envelope end&gt; &lt;hmm acc&gt; &lt;hmm name&gt; &lt;type&gt; &lt;hmm start&gt; &lt;hmm end&gt; &lt;hmm length&gt; &lt;bit score&gt; &lt;E-value&gt; &lt;significance&gt; &lt;clan&gt; &lt;predicted_active_site_residues&gt;  NODE_1_length_46850_cov_69.441152_12      18    138     17    139 PF01850.26  PIN               Domain     2   119   120     75.0   8.8e-21   1 CL0280    NODE_1_length_46850_cov_69.441152_54      76    185     75    193 PF01464.25  SLT               Domain     2   108   117     76.7   1.2e-21   1 CL0037   predicted_active_site NODE_1_length_46850_cov_69.441152_81      89    224     88    226 PF06924.16  DUF1281           Family     2   140   179     90.4   1.6e-25   1 No_clan   NODE_1_length_46850_cov_69.441152_82      53    126     53    138 PF18406.6   DUF1281_C         Domain     1    74    88     56.5   2.3e-15   1 No_clan   NODE_1_length_46850_cov_69.441152_86      53    233     53    235 PF01555.23  N6_N4_Mtase       Family     1   219   221    135.1   4.2e-39   1 CL0063    NODE_1_length_46850_cov_69.441152_87      52    187     52    187 PF07128.17  DUF1380           Family     1   137   137    170.6   2.1e-50   1 No_clan   NODE_1_length_46850_cov_69.441152_91      51    147     50    147 PF03230.18  Antirestrict      Family     2    92    92     91.9   2.6e-26   1 No_clan   NODE_1_length_46850_cov_69.441152_94      41    143     41    147 PF00436.30  SSB               Domain     1   100   104    123.7   3.3e-36   1 CL0021    NODE_1_length_46850_cov_69.441152_96      60    154     59    155 PF02195.23  ParBc             Family     2    89    90     53.7   2.1e-14   1 CL0248    NODE_1_length_46850_cov_69.441152_97      21    158     21    158 PF06290.16  PsiB              Family     1   139   139    208.5   3.4e-62   1 No_clan   NODE_1_length_46850_cov_69.441152_98      17    248     14    249 PF06952.16  PsiA              Family     4   236   237    133.0   1.2e-38   1 No_clan</code></pre>
+<p>The 8th column shows the type of entry that was hit in the pfam
+database. Let’s take a look at Pfam domain “SLT” (accession number
+PF01464). Go to <a href="https://www.ebi.ac.uk/interpro/entry/pfam" class="uri">https://www.ebi.ac.uk/interpro/entry/pfam</a>. and enter the
+accession number for this Pfam domain in the search box.</p>
+<p>In our pfam search results file, there are a lot of hits to phage
+domains and domains that manipulate DNA. You might expect this as these
+sequences have presumably been incorporated into our strain since it
+diverged from the reference. Also look at Family (the most specific type
+of hit) from our large contig NODE_2_… is there any evidence for it
+being a plasmid?</p>
 </div>
 
 

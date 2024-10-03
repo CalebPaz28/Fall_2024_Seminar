@@ -15,6 +15,9 @@ knitr::opts_chunk$set(echo = TRUE)
 > The table below contains all of the information for the course according to session.
 
 
+**[Genome Adventure Link](https://github.com/mbtoomey/genomics_adventure)**
+
+
 |Session|Topic|Date|
 |:--------:|:-------:|:-----:|
 |**[1](session_1/session_1.html)**|OSCER, Git, Rmarkdown|**8/29/24**|

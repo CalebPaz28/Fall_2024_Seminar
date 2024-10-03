@@ -1,15 +1,11 @@
 
-### **Class Notes**
+## **Class Notes**
 
 [Lecture Notes](lecture_notes.html)
 
-### **Scripts**
+> All script files are embedded within the text as links.
 
-[]()
+## **Topic**
 
-### **Topic**
-1. 
-2. 
-3. 
-4. 
-5. 
+- Information adopted from Dr. Toomey.
+
