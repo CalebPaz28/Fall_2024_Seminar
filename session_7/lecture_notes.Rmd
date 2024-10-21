@@ -1,0 +1,303 @@
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## RNA-Seq Analysis
+
+- qPCR is used to measure expression of a specific gene. Conversely, we can use RNA-seq to query the entire sample. 
+
+- This differs from genome sequencing. The depth of sequencing will correspond to the mRNA transcripts in a given region. 
+
+- For DNA, we typically are looking for uniform depth because (generally) the DNA is cells is the same.
+
+- Thus, we can quantify gene expression levels by counting the number of sequencing reads that map to a reference transcription or genome.
+
+Things to consider: 
+
+RNA is more unstable than DNA, requiring additional care during sampling and processing
+There are many forms of RNA in the cell and much of it has functions other than protein expression (e.r. ribosomal RNAs). Therefore, mosgt experiments use some for of selection to enrich for specific types of RNAs
+RNA must be reverse transcribed to cDNA before short-read sequencing libraries can be assembled.
+
+Once libraries are made, they can be sequenced in much the same ways as DNA libraries. The resulting sequence reads can then be aligned to a reference transcriptome or annotated genome, read counts generated, and then exported for statistical analyses of expression patterns.
+
+
+How do we statistically test for a difference in gene expression?
+
+## Practicing with the data (experiment)
+- After 48 hours of expression, we harvested these cells, extracted RNA, and prepare short-read sequencing libraries with poly A selection to enrich for protein coding transcripts. Then we carried our paired-end 2x150 Illumina sequencing.
+
+- Our goal now is to quantify and compare gene expression between these two conditions by mapping and counting the numbers of sequencing reads that map to each gene in the reference transcriptome.
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+```bach
+cd /scratch/biol726310
+
+mkdir RNAseq_Example
+
+cd RNAseq_Example
+```
+
+Now let's link to the RNA-Seq reads in my folder. I completed read quality assessment and trimming as we have done in other exercise, so you will not need to do these steps
+
+Reminder: These links are "symbolic" and are used to save space.
+
+```bach
+ln -s /scratch/mbtoomey/RNAseq_example/CB1_S88_R1_001.fastq.gz CB1_S88_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CB2_S89_R1_001.fastq.gz CB2_S89_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CB3_S90_R1_001.fastq.gz CB3_S90_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CB1_S88_R2_001.fastq.gz CB1_S88_R2_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CB2_S89_R2_001.fastq.gz CB2_S89_R2_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CB3_S90_R2_001.fastq.gz CB3_S90_R2_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT1_S91_R1_001.fastq.gz CBT1_S91_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT2_S92_R1_001.fastq.gz CBT2_S92_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT3_S93_R1_001.fastq.gz CBT3_S93_R1_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT1_S91_R2_001.fastq.gz CBT1_S91_R2_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT2_S92_R2_001.fastq.gz CBT2_S92_R2_001.fastq.gz
+ln -s /scratch/mbtoomey/RNAseq_example/CBT3_S93_R2_001.fastq.gz CBT3_S93_R2_001.fastq.gz
+```
+
+To generate read counts we will use Kallisto a program that uses a process called pseudoalignment to rapidly find reads that match the reference targets and generates counts. Pseudoalignment involves breaking the reference and reads into k-mers and matching these two sets.
+
+
+Since these are human cells I download the human reference transcription `GCF_000001405.40_GRCh38.p14_rna_from_genomic.fna.gz` and added the coding sequences of CYP2J19, BDH1L, and TTC39B genes from our expression constructs.
+
+
+```bach
+ml kallisto/0.46.1-foss-2019a
+
+kallisto index -i Human_RNA_ref.idx GRCh38_latest_rna_with_ORF.fna
+```
+
+Here `index` is the command to build an index and -i specifies the file name for the index.
+
+reminder: The index is usually referring to the creation of kmers.
+
+To save time, we can create another symbolic link to the index file for analyses.
+
+```bach
+ln -s /scratch/mbtoomey/RNAseq_example/Human_RNA_ref.idx Human_RNA_ref.idx
+```
+
+### Transcript quantification
+
+Now we are ready to pseudoalign and count transcripts. First let's make a folder to output the results.
+
+
+```bach
+cd /scratch/biol726310/RNAseq_Example
+
+mkdir output
+```
+Now we can set the kallisto quantification
+
+```bach
+ml kallisto/0.46.1-foss-2019a
+
+kallisto quant -i Human_RNA_ref.idx -t 20 -o ./output/CB1 -b 50 CB1_val_1.fq.gz CB1_val_2.fq.gz
+```
+
+The output including read counts and measurement variance are contained in the output folder. Download this folder to you local computer, place it within a folder DEG_analysis, and we will continue the analyses within this folder locally using R.
+
+
+```bach
+ln -s /scratch/mbtoomey/RNAseq_example/GRCh38_latest_rna_with_ORF.fna GRCh38_latest_rna_with_ORF.fna
+
+grep  '^>' GRCh38_latest_rna_with_ORF.fna | sed -E 's/>([^ ]+) .* \(([^)]+)\).*/\1 \2/' > TTC_headers.txt
+```
+
+`grep` finds a certain string
+`sed` finds strings as well
+
+## Differential gene expression analysis
+
+```{r}
+library(BiocManager)
+BiocManager::install('EnhancedVolcano')
+BiocManager::install('devtools')
+BiocManager::install('pachterlab/sleuth')
+
+library(sleuth)
+library(tidyverse)  
+library(EnhancedVolcano)
+library(pheatmap)
+```
+
+
+```{r}
+#read in sample tables - be sure to set correct path 
+
+metadata <- read.table(file = "ExpTable_TTC.txt", sep='\t', header=TRUE, stringsAsFactors = FALSE)
+
+#this command sets up paths to the kallisto output that we will process in the following steps
+
+metadata <- dplyr::mutate(metadata,
+                          path = file.path('output', Run_s, 'abundance.h5'))
+
+metadata <- dplyr::rename(metadata, sample = Run_s)
+
+#let's check the metadata
+
+metadata
+
+#Read in headers for the transcripts that we aligned to with kallisto
+#These will be mapped in the sleuth_prep command below
+
+ttn <- read_delim("TTC_headers.txt", col_names = FALSE)
+
+colnames(ttn) <-c("target_id","gene")
+```
+
+Now we are ready to process our data with the sleuth_prep command. This will aggregate the data from each samples individual result folder.
+
+```{r}
+
+?sleuth_prep
+
+so <- sleuth_prep(metadata, full_model = ~treat, target_mapping = ttn, extra_bootstrap_summary = TRUE, read_bootstrap_tpm = TRUE, aggregation_column = "gene")
+
+```
+
+
+`full_model` specifies the model we want to analyze, here we are interested in the effect of treatment. `target_mapping` will map our gene symbols to the transcript IDs. The boorstrap commands canculate stattistics for supplemental analyses we will explore with sleuth_live. `aggregation_column` sets up the dataset so we can aggregate transcripts of the same gene for our analyses.
+
+
+```{r}
+#fit model specified above
+so <- sleuth_fit(so)
+
+#print the model
+models(so)
+
+#calculate the Wald test statistic for 'beta' coefficient on every transcript 
+so <- sleuth_wt(so, 'treatTTC')
+
+
+#extract the wald test results for each transcript 
+transcripts_all <- sleuth_results(so, 'treatTTC', show_all = FALSE, pval_aggregate = FALSE)
+```
+
+
+This is a huge table (>70,000 genes), but we are only really interested in the transcripts that are significantly differentially expressed. We can filter by qval using dplyr:
+
+- The qval is adjusted for the false discovery rate (getting a significant value by chance
+)
+- We will mainly focus on the qval and b (beta) value. The beta value is an indirect measure of transcription.
+```{r}
+#filtered by significance 
+transcripts_sig <- dplyr::filter(transcripts_all, qval <= 0.05)
+```
+
+This yields a smaller list of ~1000 genes. The table is sorted by qval so we can select the 50 most significant transcripts by taking the first 50 entries.
+
+```{r}
+transcripts_50 <- dplyr::filter(transcripts_all, qval <= 0.05) %>%
+  head(50) # returns the top 50 lines
+```
+
+Above, you may have noticed that there are multiple significant transcripts for the same gene (PLEC). Sleuth offers a way aggregate these transcripts and calculate gene-level tests. To do this we will set `pval_aggregate = TRUE`
+
+```{r}
+genes_all <- sleuth_results(so, 'treatTTC', show_all = FALSE, pval_aggregate = TRUE)
+```
+
+A useful way to visualize the relative expression of all of the transcripts between two conditions is with a volcano plot that plots each transcript on an x-axis of fold-change in expression and y-axis of p-value. The most differential expressed genes will be found at the upper right and left cornerd of the plot. To do this we will use the EnhancedVolcano package that offers many ways to customize these plots.
+
+```{r}
+#extract the gene symbols, qval, and b values from the Wlad test results
+forVolacano <- data.frame(transcripts_all$gene, transcripts_all$qval, transcripts_all$b)
+
+#rename the columns of the dataframe
+colnames(forVolacano) <- c("gene","qval","b")
+
+#plot
+EnhancedVolcano(forVolacano,
+                lab = forVolacano$gene,
+                x = 'b', # measure of expression
+                y = 'qval',
+                xlab = "\u03B2", ## Making the label beta
+                labSize = 3,
+                legendPosition = "none")
+```
+
+```{r}
+## This is built with Shiny and can be used to adjust the data in neat ways!
+
+sleuth_live(so)
+```
+
+Another common way to visualize differential gene expression among treatment groups and samples is with a heatmap. To plot the heat map we will need to exact the counts for each transcript and sample. This data is contained within the sleuth object `so` and we can export it with the kallisto_table.
+
+
+```{r}
+k_table <- kallisto_table(so, normalized = TRUE)
+```
+
+The normalized option will return values that have normalized for variation is sequencing depth and composition across the samples. Sleuth uses the DESeq2 method for count normalization. We will plot the transcripts per million reads (tpm) which accounts for sequencing depth and gene length for each transcript.
+
+
+```{r}
+k_DEG <- k_table %>%
+  right_join(transcripts_50, "target_id")
+```
+
+
+For plotting we need apply a log10 transfomation and convert this dataset into a square matrix:
+
+```{r}
+k_DEG_select<-k_DEG %>%
+  #apply log10 transformation to the tpm data
+  mutate(log_tpm = log10(tpm+1)) %>%
+  #select the specifc columns to plot
+  dplyr::select(target_id, sample, log_tpm, gene) %>%
+  #create "label" from the transcript id and gene symbol
+  mutate(label = paste(target_id, gene))%>%
+  #pivot data frame to a wide format
+  pivot_wider(names_from = sample, values_from = log_tpm) %>%
+  #drop the target_id and gene variables
+  dplyr::select(!target_id & !gene) %>%
+  #convert label to row name
+  column_to_rownames("label") %>%
+  #convert to matrix 
+  as.matrix(rownames.force = TRUE)
+
+#plot with pheatmap!
+pheatmap(k_DEG_select, cexRow = 0.4, cexCol = 0.4, scale = "none")
+```
+
+## Gene ontology analysis
+
+What do our differentially expressed genes (DEGs) do? What biological processes might or treatment be affecting. To explore this we can look to see if transcripts with specific known functions are enriched among our DEGs.
+
+- Xijin Ge's group at South Dakota State has a very nice online tool for these analyses - `ShinyGo`. All we need to provide is a list of the gene symbols of our DEGs and a list of all of the genes in our transcriptome. We can extract these form our transcripts_all dataframe.
+
+http://bioinformatics.sdstate.edu/go/
+
+```{r}
+#filter for transcripts enriched in the TTC treatment
+transcripts_up <- dplyr::filter(transcripts_all, qval <= 0.05, b > 0)
+
+up<-transcripts_up %>%
+  dplyr::select(gene)
+
+#filter for transcripts depleted in the TTC treatment
+transcripts_down <- dplyr::filter(transcripts_all, qval <= 0.05, b < 0)
+
+down <- transcripts_down %>%
+  dplyr::select(gene)
+
+#output the full transcript list
+all <- transcripts_all %>%
+  dplyr::select(gene)
+
+#copy to clipboard and paste into ShinyGo website
+writeClipboard(as.character(up))
+
+#copy to clipboard and paste into ShinyGo "background"
+writeClipboard(as.character(all))
+```
+

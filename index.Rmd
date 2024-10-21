@@ -25,8 +25,8 @@ knitr::opts_chunk$set(echo = TRUE)
 |**[3](session_3/session_3.html)**|filtered, mapped, analyzed|**9/12/24**|
 |**[4](session_4/)**|Project meeting|**9/19/24**|
 |**[5](session_5/session_5.html)**|Assembly of unmapped reads|**9/26/24**|
-|**[6](session_6/session_6.html)**||**10/3/24**|
-|**[7](session_7/session_7.html)**||**10/10/24**|
+|**[6](session_6/session_6.html)**|Assembly, mapping, and annotation|**10/3/24**|
+|**[7](session_7/session_7.html)**|Pulling it all together|**10/10/24**|
 |**[8](session_8/session_8.html)**||**10/17/24**|
 |**[9](session_9/session_9.html)**||**10/31/24**|
 |**[10](session_10/session_10.html)**||**11/7/24**|

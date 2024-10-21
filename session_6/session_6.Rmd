@@ -4,8 +4,278 @@
 [Lecture Notes](lecture_notes.html)
 
 > All script files are embedded within the text as links.
+<ins>Information adopted from Dr. Toomey</ins>.
 
-## **Topic**
+## **De novo Assembly Using Short Reads**
 
-- Information adopted from Dr. Toomey.
+- This is the second approach to de novo assembly. In the first case, we mapped the reads to the reference genome and then assembled the remaining unmapped reads. In this case, we are directly assembling the reads into contigs to  construct a genome. 
+
+Login to OSCER
+
+```bach
+ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu
+```
+
+Activate environment
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+We will again use SPAdes to perform the assembly, but first a brief review.
+
+It generally performs pretty well with a variety of genomes. One big advantage is that it is not just a pure assembler - it is a suite of programs that prepare the reads you have, assembles them and then refines the assembly.
+
+1. Read error correction based on k-mer frequencies using BayesHammer.
+
+2. De Bruijn graph assembly at multiple k-mer sizes, not just a single fixed one.
+
+3. Merging of different k-mer assemblies (good for varying coverage).
+
+4. Scaffolding of contigs from paired end/mate pair reads.
+
+5. Repeat resolution from paired end/mate pair data using rectangle graphs.
+
+6. Contig error correction based on aligning the original reads with BWA back to contigs.
+
+Rather than store all reads individually which would be unfeasible for Illumina type datasets, de Bruijn assemblers convert each read to a series of k-mers and stores each k-mer once, along with information about how often it occurs and which other k-mers it links to. A short k-mer length (e.g. 21) reduces the chance that data will be missed from an assembly (e.g. due to reads being shorter than the k-mer length or sequencing errors in the k-mer), but can result in shorter contigs as repeat regions cannot be resolved.
+
+For a genomic assembly you want to try to obtain the lowest number of contigs, with the longest length, with the fewest errors.
+
+Let's look at the assembly process in more detail, let's say you have a single read "AACTAACGACGCGCATCAAAA". The set of k-mers, with length 6 (i.e. 6-mers), obtained from this read, would be created by taking the first six bases, then moving the window along one base, taking the next 6 bases and so-on until the end of the read. For example, "AACTAA", followed by "ACTAAC", then "CTAACG", "TAACGA", "TAACGAC" and so on...
+
+The **[full_spades.sh](scripts/full_spades.sh)** and **[full_spades.sbatch](scripts/full_spades.sbatch)** files have been included.
+
+
+Submit the job
+```bach
+sbatch /home/biol726310/BIOL7263_Genomics/scripts/assembly/full_spades.sbatch
+```
+
+Check on job
+```bach
+squeue -u biol726310
+```
+
+The assembly was successful and we can see some of the output files that will be of importance in downstream data analysis. 
+
+
+## **Checking the assembly**
+
+- We will use the program called - Quality Assessment Tool for Genome Assemblies - QUAST to generate some statistics on the assembly. The **[sh](scripts/unmapped_quast.sh)** and **[sbatch](scripts/unmapped_quast.sbatch)** files are linked accordingly.
+
+We can navigate to the directory that contains our assembly files and we can generate a summary (running QUAST) of the assembly to assess quality. We will try this in the login node (but it would be preferable to submit a job to OSCER).
+
+```bach
+cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly
+
+quast.py --output-dir quast contigs.fasta
+```
+
+This will create a directory called 'quast' and create some statistics on the assembly you produced, don’t worry if the results look a little different to the example. We can take a look at the file using the `cat` command, or we can use R to open these files. I have included the QUAST report below as html and text outputs.
+
+<iframe src="data_output/report.html" width="100%" height="600px"></iframe>
+
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/report.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 40), sep = "\n")
+```
+
+The N50 is 111K and the N75 is 54K which tells us that most of the assembly is in quite large contigs. What you see is fairly normal for a short read assembly - you shouldn't expect complete chromosomes.
+
+Reminder: 
+
+- **N50**: Is the length of the contig such that 50% of the total assembly length is contained in contigs of that length or longer. In this case, we could say that <ins>50% or more of the contigs are 111K long or longer</ins>. We can also see that <ins>75% of the contigs are 54K long or longer</ins>. A higher N50 indicates a more contiguous and complete assembly, with fewer gaps.
+
+- **L50**: This is the number of contigs that together contain 50% of the total assembly length. This tells us how many contigs are required to reach 50% of the assembly length. This number represents the minimum number of contigs that cover half of the genome. For our assembly, we have an L50 of 14, which indicates that 50% of the assembled genome is contained in 14 of the longest contigs.
+
+A lower L50 indicates a better assembly, meaning fewer, longer contigs are needed to cover a significant portion of the genome.
+
+In summary: A **higher N50** and **lower L50** generally indicate better assembly quality, as they signify longer contiguous sequences and fewer, larger contigs.
+
+
+A good check at this point is to map the original reads back to the 'contigs.fasta' file and check that all positions are covered by reads. Amazingly, it is actually possible for de novo assemblers to generate contigs to which the original reads will not map!!
+
+## **Map Reads Back to Assembly**
+
+Here we will use BWA again to index the contigs.fasta file and remap the reads. This is almost identical to the procedure we followed during the alignment section, the only difference is that instead of aligning to the reference genome, we are aligning to our newly created reference.
+
+```bach
+cd /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly
+
+mkdir mapping_to_assembly
+
+cd mapping_to_assembly
+```
+
+We now need to index and map our files, this is similar to the steps from Chapter 2... Indeed we will use the QC reads we created in Task 2!
+
+1) Use bwa to index and map our files. This will output a SAM file.
+2) We will convert the SAM to BAM
+3) We will sort the BAM file 
+4) Now we can index the BAM file
+
+This is all provided in the following **[script](scripts/align_de_novo.sh)** and **[sbatch](scripts/align_de_novo.sbatch)**.
+
+
+Submit the job
+```bach
+sbatch /home/biol726310/BIOL7263_Genomics/scripts/assembly/align_de_novo.sbatch
+```
+
+Check on job
+```bach
+squeue -u biol726310
+```
+
+5) We can obtain basic summary statistics using the samtools flagstat command:
+
+```bach
+samtools flagstat contigs_mapped_sorted.bam
+```
+
+We can see that very few of the reads do not map back to the contigs. Importantly 99% of the reads are properly paired, which gives us some indication that there are not too many mis-assemblies.
+
+```bach
+5903595 + 0 in total (QC-passed reads + QC-failed reads)
+0 + 0 secondary
+1535 + 0 supplementary
+0 + 0 duplicates
+5903467 + 0 mapped (100.00% : N/A)
+5902060 + 0 paired in sequencing
+2951030 + 0 read1
+2951030 + 0 read2
+5846082 + 0 properly paired (99.05% : N/A)
+5901918 + 0 with itself and mate mapped
+14 + 0 singletons (0.00% : N/A)
+36946 + 0 with mate mapped to a different chr
+36258 + 0 with mate mapped to a different chr (mapQ>=5)
+```
+We can run 'qualimap' to get some more detailed information (and some images too). The following output was generated using the **[script](scripts/qmap_de_novo.sh)** and **[sbatch](scripts/qmap_de_novo.sbatch)** files.
+
+<iframe src="data_output/qualimapReport.html" width="100%" height="600px"></iframe>
+
+```bach
+blastn -subject /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly/contigs.fasta -query /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/unmapped_assembly/spades_assembly/contigs.fasta -outfmt 6 -out /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly/mapping_to_assembly/check_plasmid.blastn
+```
+
+This worked well and I was able to successfully blast the sequence of interest. The results are shown below.
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/check_plasmid.blastn"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content), sep = "\n")
+```
+
+This shows us that this contig almost exactly matches the the unmapped assembly, strongly supporting that this is a plasmid sequence and not integrated into the chromosomes.
+
+## **Veiwing the assembly in IGV**
+
+We are going to import the contigs we have assembled as the reference. Unlike the reference genome though, we have no annotation available. Make sure you select the contigs.fasta file for the complete de novo assembly (not the unmapped reads assembly).
+
+Once loaded, click on "File --> Load From File..." and select the contigs_mapped.sorted.bam file. Again make sure you load the file in the "remapping_to_assembly" directory.
+
+Once loaded, explore some of the contigs in IGV. See if you can find anything unusual or interesting in any of the contigs.
+
+Here's one to get you started... Zoom in on "NODE_1..." until you can see the reads. Then go to the start of the contig and have a look at the reads.
+
+## **Annotation of de novo Assembled Contigs**
+
+We will now annotate the contigs using BLAST and Pfam as with the unmapped contigs.
+
+As before, we’ll 'call' open reading frames within the de novo assembly. We will use codon table 9 (transl_table=11) which defines the bacterial codon usage table. We will also restrict the ORFs to just those sequences longer than 300 nucleotides (i.e. 100 amino acids). We will generate two files a fasta "orfs.fa" with the predicted amino acid sequences and a .bed file with the genome locations for mapping in IGV. I submitted the following files to create the `orf.*` files. 1) **[script](scripts/orfipy.sh)** and 2) **[sbatch](scripts/orfipy.sbatch)**.
+
+Activate environment
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+Submit the job
+```bach
+sbatch /home/biol726310/BIOL7263_Genomics/scripts/assembly/orfipy.sbatch
+```
+
+Check on job
+```bach
+squeue -u biol726310
+```
+
+We can view the output of the file below:
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/orfs.fa"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content), sep = "\n")
+```
+
+As with the unmapped reads we will search the open reading frames against the Pfam HMM database of protein families. Later on we will be able to use these results to identify Pfam domains which are unique to a particular strain.
+
+
+We can use the **[pfam.sh](scripts/pfam.sh)** and **[pfam.sbatch](scripts/pfam.sbatch)** files to submit a job that will search the open reading frames against the Pfam HMM database of protein families. (This will take time to run).
+
+
+> I am having a difficult time with this one...
+
+Another simple way to annotate the genes is to blast the orfs.fa file against known proteins. You could blast all possible proteins in the "nr" database, but this would take a large amount of memory and time. We can speed up the search by creating a smaller database of proteins from an existing E. coli genome assembly.
+
+
+```bach
+cd /scratch/biol726310/BIOL7263_Genomics/db
+
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_translated_cds.faa.gz
+
+gunzip GCF_000005845.2_ASM584v2_translated_cds.faa.gz
+
+makeblastdb -in GCF_000005845.2_ASM584v2_translated_cds.faa -dbtype prot -parse_seqids -out Ec_prot
+```
+
+We can then use blastp to find the top hit in this smaller database for each putative reading frame in the genome:
+
+```bach
+blastp -query /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly/orfs.fa -db /scratch/biol726310/BIOL7263_Genomics/db/Ec_prot -outfmt "6 qseqid sseqid pident stitle" -max_target_seqs 1 | sort -u > /scratch/biol726310/BIOL7263_Genomics/sequencing_data/ecoli/assembly/orf_hit.txt
+```
+
+We will submit the above code as a job to OSCER. Here is the **[script](scripts/orf_blast.sh)** and **[sbatch](scripts/orf_blast.sbatch)** files.
+
+
+Here is a useful **[PAGE](https://www.metagenomics.wiki/tools/blast/blastn-output-format-6)** for the different blast options 
+
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/orf_hit.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content), sep = "\n")
+```
+
+I was able to export the data as a `.csv` file type, but this would require futher data processing to separate each of the elements into columns.
+
+
+
+
+
+
+
 

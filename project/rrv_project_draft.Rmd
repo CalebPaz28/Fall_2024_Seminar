@@ -2,6 +2,30 @@
 output: html_document
 ---
 
+```{r include = FALSE}
+library(rmarkdown)
+```
+
+# Purpose 
+
+There are many research projects conducted on vastly different organisms that are not related to virus research. Because the focus on a given research task does not involve the detection or discovery of viruses, this is often overlooked and provides an opportunity for virologists to comb through the data and see if viruses are present. Given that each organism present on plant Earth is estimated to be infected by at least one virus, this provides ample opportunity to discover novel viruses in a host of interest.
+
+Not only is this conceptual, but this as been applied in a variety of hosts. I will speak to viruses from cotton and roses in this case. 
+
+1) In soybean, 
+
+Elmore, M. G., Groves, C. L., Hajimorad, M. R., Stewart, T. P., Gaskill, M. A., Wise, K. A., ... & Whitham, S. A. (2022). Detection and discovery of plant viruses in soybean by metagenomic sequencing. Virology Journal, 19(1), 149. 
+
+- A virus was not found by combing through transcriptome data...
+
+2) In roses, 
+
+Xing, F., Gao, D., Habili, N., Wang, H., Zhang, Z., Cao, M., & Li, S. (2021). Identification and molecular characterization of a novel carlavirus infecting rose plants (Rosa chinensis Jacq.). Archives of Virology, 166, 3499-3502.
+
+- RVC was found by looking through transcriptome data
+- This can help in the future as growers and diagnosticians decide which viruses they should screen for.
+
+
 # **Exploring RNA-seq data for the presence of unreported or novel viruses in the genus *Rosa* **
 
 ## **Overview of the project**
@@ -18,7 +42,7 @@ output: html_document
 10. Analyze results
 
 
-I am planning to maintain everything in the scratch folder on the OSCER. Also, I am keeping all the scripts in my Rstudio folder so that I can easily upload the correct scripts while correcting them when submitting jobs.
+> I am planning to maintain everything in the scratch folder on the OSCER. Also, I am keeping all the scripts in my Rstudio folder so that I can easily upload the correct scripts while correcting them when submitting jobs.
 
 
 ### **1. Download SRA Data (RNA-Seq)**
@@ -127,7 +151,7 @@ Check that there is an identical number of reads in each file (this one is not w
 cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | grep @SRR | wc –l
 ```
 
-From our class exercises: We will need to create an **[sbatch file](scripts/rose_fastqc.sbatch)** and **[sh script](scripts/rose_fastqc.sh)** with our code.
+From our class exercises: We will need to create an **[sbatch file](scripts/rose_fastqc.sbatch)** and **[sh script](scripts/rose_fastqc.sh)** with our code. Generally anything with a median quality score greater than Q20 is regarded as acceptable; anything above Q30 is regarded as 'good'.
 
 ```bach
 fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
@@ -143,22 +167,88 @@ sbatch /scratch/biol726310/BIOL7263_Genomics/rrv_project/scripts/rose_fastqc.sba
 
 Check on job
 
-`squeue -u biol726310`
-
+```bach
+squeue -u biol726310
+```
 
 #### **Results of the quality control**
 
+<iframe src="data_output/SRR29872023_1_fastqc.html" width="100%" height="600px"></iframe>
 
+
+<iframe src="data_output/SRR29872023_2_fastqc.html" width="100%" height="600px"></iframe>
+
+
+We need to include the trimming files (this will need to be modified according the the output files generated)
+
+```bach
+trim_galore --paired --fastqc --gzip --cores 4 --length 100 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_1.fastq.gz /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_2.fastq.gz --basename trimmed_reads -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/trimming
+```
+
+```bach
+#!/bin/bash
+#
+#SBATCH --partition=normal
+#SBATCH --ntasks=1
+#SBATCH --mem 16G
+#SBATCH --output=trim_galore_%J_stdout.txt
+#SBATCH --error=trim_galore_%J_stderr.txt
+#SBATCH --job-name=trim_galore
+# 
+
+bash /home/biol726310/BIOL7263_Genomics/pseudomonas_gm41/scripts/trim_galore.sh
+```
 
 *___________________________________________________________________________________________________*
 
 
 ### **4. Reference mapping of reads to host genome**
 
-We will be using Hisat2 for read mapping because this program is particular good at mapping RNA reads onto a DNA genome.
+Usually, we would use BWA (currently called `minimap2`) to map reads to a reference genome. We will be using Hisat2 for read mapping because this program is particular good at mapping RNA reads onto a DNA genome.
+
+General steps:
+1) Create a reference index of the reference sequence (host sequence in most of our cases)
+
+2) Map raw, trimmed, de novo assembled (any reads) to the indexed reference sequence
+
+3) The output will be a `.SAM` file (Simple Alignment format)
+
+4) Convert the `.SAM` to a `.BAM` (Binary alignment format). `.SAM` files are great for readability but they do not do so well with computational accessibility. This is why we convert the file to `.BAM`. 
+
+5) Sort the `.BAM` file.
+
+The below code is from Salil:
+
+1. creating a new environment
+```bach
+conda create -n hisat2_env
+```
+
+2. Install a program of interest (hisat2)
+```bach
+conda install hisat2
+```
+
+3. activate the environment
+```bach
+conda activate hisat2_env
+```
 
 
+4. unzip the file of interest
+```bach
+gunzip [file of interest]
+```
 
+5. create an index file 
+```bach
+hisat2-build [path to reference genome]
+```
+
+6. Aligning reads to the index of the reference genome
+```bach
+hisat2 -x 
+```
 
 
 
@@ -179,7 +269,11 @@ We will be using Hisat2 for read mapping because this program is particular good
 *___________________________________________________________________________________________________*
 
 
-### **6. Assembly of reads (rnaSPADES)**
+### **6. Assembly of unmapped reads (rnaSPADES)**
+
+```bach
+spades.py --rna -t 20 -m 60 -o spades_assembly -1 trimmed_reads_val_1.fq.gz -2 trimmed_reads_val_2.fq.gz
+```
 
 
 *___________________________________________________________________________________________________*
@@ -188,16 +282,127 @@ We will be using Hisat2 for read mapping because this program is particular good
 ### **7. Create a database of viruses (using the taxa accession or ID) so that BLAST can be run locally**
 
 
+#### BLAST
+
+Diamond only allows for searches of a protein database. To search a nucleotide database we can use the blast+ suite of tools. This is the exact same tool that is used for online blast searches. However, when we implement it on our system we will need to provide a search database. The blast+ suit includes a script to download the preconfigured databases from NCBI: [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK569850/)
+
+We will likely have to navigate to the directory where we plan to create the databases.
+
+To check the databases that are available you can run:
+
+```bach
+update_blastdb.pl --showall
+```
+
+```bach
+update_blastdb.pl --decompress [DATABASE NAME]
+```
+
+We will need to make a script for this database download.
+
+```bach
+update_blastdb.pl --decompress nt_viruses
+```
+*core_nt* is the default database used in online blast searches, but is >160Gb. This is not feasible for our searches. We can download the *nt_viruses* or *nt_prok* databases, which are much smaller in relative size. The *nt_euk* is very much impractically large.
+
+
+We can create a smaller database that contains certain viruses to reduce the search time. We also may be interested in fungi, bacteria, phytoplasma, etc.
+
+
+In this example, we are downloading all of the RNA from the NCBI human reference genome ( GCF_000001405.40_GRCh38.p14_rna.fna.gz). We can use this as our current database.
+
+
+```bach
+makeblastdb -in human_RNA.fna -parse_seqids -blastdb_version 5 -title "Human RNA" -dbtype nucl -out human_rna_db
+```
+
+
 *___________________________________________________________________________________________________*
 
 
-### **8. Use Diamond for blasting (requires protein sequences: translate the nucleic acid to protein)**
+### **8. Use Diamond for blasting against protein sequences (requires protein sequences: translate the nucleic acid to protein)**
 
+To do this we will compare them to known or annotated proteins in other bird species. We will use Diamond to run efficient blast searches of databases.
+
+We are going to build our own database for this search. To do this lets go to the Uniprotkb database and download all of the protein sequences for chicken and zebra finch, two well annotated species.
+
+We can download the sequences as fasta files to construct our database. We can download from uniprotkb or NCBI. 
+
+Here is the general command:
+
+```bach
+diamond makedb --in input_sequences.fasta -d database_name
+```
+
+Here is the taxon ID for viruses 10239. It appears that we will have to manually download fasta sequences from NCBI or Uniprotkb and then use that for protein blasting.
+
+I was able to generate a link from the Uniprotkb website that will download all of the protein seqeunces using the link (rather than downloading manually)
+
+> I have not yet tried this link. I should probably create a script for this rather than using the login node.
+
+wget --header='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' "https://rest.uniprot.org/uniprotkb/stream?compressed=true&format=fasta&query=%2810239%29"
+
+
+This method appears to work, but I have not completed the download process.
+
+```bach
+wget --header='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' "https://rest.uniprot.org/uniprotkb/stream?format=fasta&query=%2810239%29"
+```
+
+Below I have included my files for OSCER submission:
+
+1) **[.sh script](scripts/protein_db_download.sh)** 
+
+2) **[.sbatch file](scripts/protein_db_download.sbatch)**
+
+
+This is how we can join two databases (more than one organism of interest)
+
+```bach
+cat ZeFi_proteins.fasta chicken_proteins.fasta > bird_proteins.fasta
+```
+
+```bach
+diamond makedb --in bird_proteins.fasta -d bird_proteins
+```
+
+```bach
+diamond blastp --threads 8 --outfmt 6 -k 1 -d bird_proteins.dmnd -q HoLa_scaffold_123.aa -o HoLa_blastp.tsv
+```
+
+-d sets the path to our database.
+-k limits the output to the top hit only.
+-q sets the path to our query sequences from the genome
+-o sets the name of the output file
+--threads sets the number of cpu cores to use for the anlysis. Remember to match this in the .sbatch file.
+--outfmt 6 sets the output to a table.
+
+Similar to above, we download the human proteins from Uniprotkb. Now we need to transform this file into a database that diamond can use for our blast search:
+
+```bach
+diamond makedb --in human_proteins.fasta -d human_proteins
+```
+
+Now we can run the blast search, however this time we will be searching RNA transcripts against a protein database. Therefore, we will use the blastx search option in diamond.
+
+```bach
+diamond blastx --threads 8 --outfmt 6 qseqid sseqid length pident evalue stitle -k 1 -d human_proteins.dmnd -q transcripts.fasta -o HEK_blastx.tsv
+```
 
 *___________________________________________________________________________________________________*
 
 
 ### **9. Accumulate BLAST results for both nucleotide and protein blast**
+
+```bach
+/home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db
+```
+
+```bach
+blastn -db /home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db -query transcripts.fasta -outfmt "6 qseqid sseqid stitle" -num_threads 20 -num_alignments 1 > TTC_rna_blast.tsv
+```
+
+Now download and compare the results of the diamond protein search HEK_blastx.tsv to the blastn nucleotide search HEK_blastn.tsv. You will notice they are similar, but not identical. The blastn search identified more of the de novo transcripts as you might expect since this database contains non-coding RNAs and non-coding protions of the transcript sequences. Thus, a nucleotide-based search my be better, but keep in mind that nucleotide sequences are mush less conserved than protein sequences. If you are comparing to a database from a distantly releated taxa, the blastx protein search may be more reliable.
 
 
 *___________________________________________________________________________________________________*
@@ -205,9 +410,9 @@ We will be using Hisat2 for read mapping because this program is particular good
 
 ### **10. Analyze results**
 
+- I would like to see if I can create a .csv output so that I can quickly evaluate the data generated by using R. If I am able to write a script that quickly generates the important information, I can easily render a document that summarizes our findings.
 
-
-
+- We will also need to include the coverage depth, and other information related to whether we can trust the results or not.
 
 
 

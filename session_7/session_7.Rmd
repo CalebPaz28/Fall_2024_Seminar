@@ -3,13 +3,291 @@
 
 [Lecture Notes](lecture_notes.html)
 
-### **Scripts**
+> All script files are embedded within the text as links.
+<ins>Information adopted from Dr. Toomey</ins>.
 
-[]()
+## **De novo Assembly Using Short Reads**
 
-### **Topic**
-1. 
-2. 
-3. 
-4. 
-5. 
+Login to OSCER
+
+```bach
+ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu
+```
+
+Activate environment
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+We may have to redownload the data (if OSCER deleted our previous files)
+
+```bach
+mkdir pseudomonas_gm41 
+
+cd pseudomonas_gm41
+
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_1.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR491/SRR491287/SRR491287_2.fastq.gz
+
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/006/SRR1042836/SRR1042836_subreads.fastq.gz
+
+chmod 444 *.gz
+```
+Regions of the genome will occur with different frequencies in the library that was sequenced - You can see this in the variation of coverage when you did the alignment. This can be due to inherent biases in the preparation and the random nature of the process.
+
+If two regions contain the same or very similar sequences the assembler cannot reliably detect that they are actually two or more distinct sequences and incorrectly 'collapses' the repeat into a single sequence. 
+
+One resolution to this is to use a sequencing technology like PacBio or Sanger which can produce longer reads - the reads are then long enough to include the repeated sequence, plus some unique sequence, and the problem can be resolved. Unfortunately getting enough coverage using Sanger sequencing is expensive and PacBio - although relatively inexpensive has a high error rate.
+
+In this exercise will be to use Illumina and PacBio datasets to assemble a species of pseudomonas. These are subsets of data used in "Evaluation and validation of de novo and hybrid assembly techniques to derive high-quality genome sequences" Utturkar et al., 2014.
+
+## **QC the Data**
+
+```bach
+fastqc /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_1.fastq.gz -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/
+
+fastqc /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_2.fastq.gz -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/
+```
+
+Here are the following files submitted to OSCER 1) **[.sh script](scripts/pseud_qc.sh)** and 2) **[.sbatch file](scripts/pseud_qc.sbatch)**.
+
+
+Submit the job
+
+```bach
+sbatch /home/biol726310/BIOL7263_Genomics/pseudomonas_gm41/scripts/pseud_qc.sbatch
+```
+
+Check on job
+
+```bach
+squeue -u biol726310
+```
+
+<iframe src="data_output/SRR491287_1_fastqc.html" width="100%" height="600px"></iframe>
+
+
+<iframe src="data_output/SRR491287_2_fastqc.html" width="100%" height="600px"></iframe>
+
+## **Trimming the reads**
+
+Here we will trim the Illumina short-reads as your did in chapter 2.
+
+
+Here are the following files submitted to OSCER
+
+1) **[.sh script](scripts/trim_galore.sh)** 
+
+2) **[.sbatch file](scripts/trim_galore.sbatch)**
+
+
+<iframe src="data_output/trimmed_reads_val_1_fastqc.html" width="100%" height="600px"></iframe>
+
+
+<iframe src="data_output/trimmed_reads_val_1_fastqc.html" width="100%" height="600px"></iframe>
+
+
+## **Assembly Time!** 
+
+```bach
+cd /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/
+
+mkdir assembly 
+
+cd assembly
+```
+
+Below is the command for the assembly process, but we will (obviously) submit the job to OSCER.
+
+```bach
+spades.py --phred-offset 33 --threads 24 --careful -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/assembly/illumina_only
+-1 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_trimmed_reads_val_1.fq.gz
+-2 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_trimmed_reads_val_2.fq.gz
+```
+
+Here are the following files submitted to OSCER for de novo assembly. 
+
+1) **[.sh script](scripts/pseud_short_assembly.sh)** 
+
+2) **[.sbatch file](scripts/pseud_short_assembly.sbatch)**
+
+Our assembly was successful and now we can view a portion of the results below. In this examples, we are looking at the contigs that were assembled from the reads. We are simply displaying the `head` of the file.
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/contigs.fasta"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content), sep = "\n")
+```
+
+Now that the assembly is completed, we will check the results of the assembly using QUAST. We have submitted our 
+
+1) **[.sh script](scripts/quast_assembly.sh)** 
+
+2) **[.sbatch file](scripts/quast_assembly.sbatch)**
+
+```bach
+quast.py --output-dir /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/assembly/illumina_only/quast /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/assembly/illumina_only/contigs.fasta
+```
+Below I have included a summary of the QUAST report as a text file. We can also view the report as a `.pdf` file. The `.pdf` format is very nice and provides a helpful way to view the data output.
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/report.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 40), sep = "\n")
+```
+
+<iframe src="data_output/report.pdf" width="100%" height="600px"></iframe>
+
+## **Creating a hybrid assembly** 
+
+Now will execute the same command, but this time include the longer PacBio reads to see the effect it has on our assembly.
+
+We have submitted our files to OSCER:
+
+1) **[.sh script](scripts/pseud_long_assembly.sh)** 
+
+2) **[.sbatch file](scripts/pseud_long_assembly.sbatch)**
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/hybrid_contigs.fasta"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 20), sep = "\n")
+```
+
+Now that we have assembled the data, we will AGAIN, run QUAST to check the assembly. 
+
+We have submitted our files to OSCER:
+
+1) **[.sh script](scripts/quast_hybrid_assembly.sh)** 
+
+2) **[.sbatch file](scripts/quast_hybrid_assembly.sbatch)**
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/hybrid_report.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 40), sep = "\n")
+```
+
+<iframe src="data_output/hybrid_report.pdf" width="100%" height="600px"></iframe>
+
+## **Align reads back to reference**
+
+1) Create an index with BWA from the hybrid assembly. We can do this within the login node (smaller task) or include it in our script file that will have all of the steps needed to obtain our output of interest.
+
+```bach
+#make a new folder for the mapping output
+mkdir /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/mapping_to_assembly/
+
+#make the index and write it to the new folder
+bwa index -p /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/mapping_to_assembly/hybrid_assembly /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/assembly/hybrid/contigs.fasta 
+```
+
+2) Use BWA to align the trimmed reads back to the assembly.
+
+```bach
+bwa mem -t 6 [path to folder that contains the index files] [path to trimmed read 1] [path to trimmed read 2] -o [path to final .sam file]
+```
+
+3) Convert `.sam` to `.bam`.
+
+```bach
+samtools view -bS [path to .sam] > [path to output file with the extension .bam]
+```
+
+4) Sort the `.bam` file.
+
+```bach
+samtools sort -o [path to output the sorted .bam file] [path to original .bam file]
+```
+
+5) Index the sorted `.bam` file.
+
+```bach
+samtools index [path to sorted .bam file]
+```
+
+6) Generate stats of this process.
+
+```bach
+samtools flagstat [path to sorted.bam] > [path to create a new sorted.stats file]
+```
+
+The following files were submitted to OSCER:
+
+1) **[.sh script](scripts/align_hybrid.sh)** 
+
+2) **[.sbatch file](scripts/align_hybrid.sbatch)**
+
+The output for the flagstats has been included for the mapping of trimmed reads to the assembled genome.
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/pseudo_illumina_sorted.stats"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 30), sep = "\n")
+```
+
+We can now map our PacBio data to our assembly too. For this we will use another tool called "minimap2" which is better suited to mapping PacBio data than BWA.
+
+The following files were submitted to OSCER:
+
+1) **[.sh script](scripts/align_pacbio.sh)**
+
+2) **[.sbatch file](scripts/align_pacbio.sbatch)**
+
+```{r}
+# Specify the path to your text file
+file_path <- "data_output/pseudo_pacbio_sorted.stats"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, n = 30), sep = "\n")
+```
+
+## **IGV**
+
+Now that we have the `.bam` file, we can load them into **IGV** 
+
+ou can see that the PacBio reads are much longer, but the error rate particularly insertions and deletions is much higher than for the Illumina reads.
+
+Explore a few other contigs to see if you can find something that looks like an error or mis-assembly. Remember the assembly process is difficult and far from perfect.
+
+## **Summary**
+
+*de-novo* assembly of short reads is a challenging problem. Even for small genomes, the resulting assembly is fragmented into contigs and far from complete.
+
+Incorporating longer reads to produce a hybrid assembly can be used to reduce the fragmentation of the genome.
+
+
+
+
+
+
+

@@ -1,0 +1,1 @@
+spades.py --phred-offset 33 --threads 24 --careful -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/assembly/illumina_only -1 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/trimming/trimmed_reads_val_1.fq.gz -2 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/trimming/trimmed_reads_val_2.fq.gz

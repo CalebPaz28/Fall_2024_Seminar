@@ -7,6 +7,254 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 
+## Genome annotation
+
+Annotation of genes is very difficult.
+
+- **Homology** is a primary method for annotating genes (find genes and compare them to existing resources)
+- We can also look for specific domains that are associated with a particular protein
+
+GNOMON is a proprietary tool that is highly complex and what NCBI uses when submitting a genome
+
+Another pipeline is BREAKER. This is freely available, but there are other options available for specific organisms of interest.
+
+Two step process: 
+1) Gene finding
+2) Homology searching
+
+## Practice
+
+1. Create a directory 
+
+2. Create a symbolic link. These are very useful links.
+
+```bach
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/HoLa_scaffold_123.fasta HoLa_scaffold_123.fasta
+ 
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/bird_proteins.fasta bird_proteins.fasta
+```
+
+3. We will run everything within our current folder (HoLa)
+
+4. We will use the package AGUSTUS
+
+```bach
+ml AUGUSTUS/3.4.0-foss-2020b
+
+augustus --species=chicken --protein=on HoLa_scaffold_123.fasta > HoLa_scaffold_123.gff
+
+getAnnoFasta.pl HoLa_scaffold_123.gff
+```
+
+The first command runs the gene finding with the chicken model and I have selected --protein=on so that augustus will out put predicted AA sequences. The getAnnoFasta.pl script writes these AA sequences to a new file that we will use next for homology search.
+
+This process yields two files a .gff that maps the predicted genes to the genome and a .aa file that contains the AA sequences of the predicted genes.
+
+
+Submit the job
+```bach
+sbatch HoLa_augustus.sbatch
+```
+
+Check on job
+```bach
+squeue -u biol726310
+```
+
+To do this we will compare them to known or annotated proteins in other bird species. We will use Diamond to run efficient blast searches of databases.
+
+We are going to build our own database for this search. To do this lets go to the Uniprotkb database and download all of the protein sequences for chicken and zebra finch, two well annotated species.
+
+We can download the sequences as fasta files to construct our database. We can download from uniprotkb or NCBI. 
+
+This is how we can join the two databases
+
+```bach
+cat ZeFi_proteins.fasta chicken_proteins.fasta > bird_proteins.fasta
+```
+
+```bach
+diamond makedb --in bird_proteins.fasta -d bird_proteins
+```
+
+Now we have a database file called bird_proteins.dmnd that we can search with our protein predictions from augustus. Let's do it!
+
+```bach
+diamond blastp --threads 8 --outfmt 6 -k 1 -d bird_proteins.dmnd -q HoLa_scaffold_123.aa -o HoLa_blastp.tsv
+```
+
+-d sets the path to our database.
+-k limits the output to the top hit only.
+-q sets the path to our query sequences from the genome
+-o sets the name of the output file
+--threads sets the number of cpu cores to use for the anlysis. Remember to match this in the .sbatch file.
+--outfmt 6 sets the output to a table.
+
+
+Now let's use these blast hits to add features to genes found by augustus. Here we will edit the .gff file with AGAT a convient tool for editing .gff files. There we some complicated dependencies so I set this up in a separate environment.
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/agat
+```
+
+```bach
+agat_sp_manage_functional_annotation.pl -f HoLa_scaffold_123.gff -b HoLa_blastp.tsv --db bird_proteins.fasta --output HoLa_annotated.gff
+```
+
+This will take our blastp output (HoLa_blastp.tsv) and searches the original protein database (bird_protein.fasta) to pull gene names and adds them to the annotation to consruct a new annotation.
+
+## Transcriptome annotation
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+We can use the same approaches to annotate de novo assembled transcriptomes produced from RNA sequencing data. (We will not run it at this time because it will take approx. 2 hrs to run).
+
+```bach
+spades.py --rna -t 20 -m 60 -o spades_assembly -1 trimmed_reads_val_1.fq.gz -2 trimmed_reads_val_2.fq.gz
+```
+
+```bach
+cd /scratch/[your id]
+
+mkdir HEK_annotation
+
+cd HEK_annotation
+```
+
+As above, we will be running all of the scripts from this folder. Now let's make the links to the assembly and the human protein reference database:
+
+```bach
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/transcripts.fasta transcripts.fasta
+
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/human_proteins.faa human_proteins.fasta
+```
+
+Similar to above, we download the human proteins from Uniprotkb. Now we need to transform this file into a database that diamond can use for our blast search:
+
+```bach
+diamond makedb --in human_proteins.fasta -d human_proteins
+```
+
+Now we can run the blast search, however this time we will be searching RNA transcripts against a protein database. Therefore, we will use the blastx search option in diamond.
+
+```bach
+diamond blastx --threads 8 --outfmt 6 qseqid sseqid length pident evalue stitle -k 1 -d human_proteins.dmnd -q transcripts.fasta -o HEK_blastx.tsv
+
+```
+
+Now we have our blast results in tabular form HEK_blast.tsv. Let's merge these with out transcriptome assembly and add annotation to the tranacript headers. To do this lets first strip out the information we are interested in with an awk command.
+
+```bach
+awk '{split($0, a, " "); split(a[2], b, "|"); gene = ($0 ~ /GN=/) ? gensub(/.*GN=([^ ]+).*/, "\\1", "g") : "-"; desc_start = index($0, a[7]); desc_end = match(substr($0, desc_start), / OS=/); print a[1] "\t" gene "|" a[2] " " substr($0, desc_start, desc_end - 1)}' HEK_blastx.tsv > HEK_headers.txt
+```
+
+Now that we have the header file we can merge this with our transcriptome using the replace function in seqkit a package with many useful functions to edit fasta files.
+
+```bach
+seqkit replace -p "(.+)" -r '$1|{kv}' -k HEK_headers.txt transcripts.fasta > transcripts_annotated.fasta
+
+```
+
+```bach
+grep '^>' transcripts.fasta | tail
+
+grep '^>' transcripts_annotated.fasta | tail
+```
+
+Here I used grep to return just the headers from the file then piped | these to tail to look at the last few entries.
+
+Note that many of the assembled transcripts had no hits in our protein database. This is not surprising, because the transcriptome contains many RNAs not represented in this dataset (i.e. non-coding RNAs).
+
+
+## BLAST
+
+Diamond only allows for searches of a protein database. To search a nucleotide database we can use the blast+ suite of tools. This is the exact same tool that is used for online blast searches. However, when we implement it on our system we will need to provide a search database. The blast+ suit includes a script to download the preconfigured databases from NCBI: [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK569850/)
+
+```bach
+update_blastdb.pl --decompress [DATABASE NAME]
+```
+
+To check the databases that are available you can run:
+
+```bach
+update_blastdb.pl --showall
+```
+
+*core_nt* is the default database used in online blast searches, but is >160Gb. This is not feasible for our searches. We can download the *nt_viruses* or *nt_prok* databases, which are much smaller in relative size. The *nt_euk* is very much impractically large.
+
+
+In this example, we are downloading all of the RNa from the NCBI human reference genome ( GCF_000001405.40_GRCh38.p14_rna.fna.gz). We can use this as our current database.
+
+```bach
+makeblastdb -in human_RNA.fna -parse_seqids -blastdb_version 5 -title "Human RNA" -dbtype nucl -out human_rna_db
+```
+
+The above command will take some time so we will access Dr. Toomey's pre-downloaded database.
+
+```bach
+/home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db
+```
+
+```bach
+blastn -db /home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db -query transcripts.fasta -outfmt "6 qseqid sseqid stitle" -num_threads 20 -num_alignments 1 > TTC_rna_blast.tsv
+```
+
+Now download and compare the results of the diamond protein search HEK_blastx.tsv to the blastn nucleotide search HEK_blastn.tsv. You will notice they are similar, but not identical. The blastn search identified more of the de novo transcripts as you might expect since this database contains non-coding RNAs and non-coding protions of the transcript sequences. Thus, a nucleotide-based search my be better, but keep in mind that nucleotide sequences are mush less conserved than protein sequences. If you are comparing to a database from a distantly releated taxa, the blastx protein search may be more reliable.
+
+
+## Side Quest - Blasting raw reads
+
+A situation may arise where you would like to search your raw sequencing reads for a specific gene or sequence. Basic BLAST is not well suited to this task. However, there is an alternative version called Magic-BLAST that is designed to query a database with sequencing reads.
+
+Let's work through an example with the HEK cell experiment raw reads. In this experiment I expressed several carotenoid metabolizing genes and was interested in if and how the exprerssion of these heterologous genes affected gene expression in the cells. One of those genes was CYP2J19, let's see if we can find this transcript in the raw reads.
+
+```bach
+cd /scratch/biol726310/
+
+mkdir raw_read_blast
+
+cd raw_read_blast
+
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/CYP2J19.fasta CYP2J19.fasta
+
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/subsample_1.fq subsample_1.fq
+
+ln -s /home/mbtoomey/BIOL7263_Genomics/Example_data/subsample_2.fq subsample_2.fq
+```
+
+First we will need to transform the CYP2J19.fasta into a searchable database. As we did above, we will use the makeblastdb function. I installed magicblast to a separate environment, so you will first need to activate the magicbalst environment with mamba and then you can proceed.
+
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/magicblast
+
+makeblastdb -in CYP2J19.fasta -dbtype nucl -parse_seqids -out CYP2J19 -title "CYP2J19"
+```
+
+Now you should have a very small database, consisting of just the CYP2J19 nucleotide sequence.
+
+```bach
+magicblast -query subsample_1.fq -query_mate subsample_1.fq -db CYP2J19 -infmt fastq -outfmt sam -no_unaligned -out HEK_CYP2J19_blast.sam
+```
+
+Similar to many of the above jobs. We will create script and sbatch files for these analyses.
+
+The result of our search is a sam file containing all of the reads that matched the database:
+
+
+```bach
+cat HEK_CYP2J19_blast.sam
+```
+
+If we want to visualize these reads we can convert the sam to a bam file and load it into IGV.
+
+
+
+Now download CYP2J19.fasta, CYP2J19.fasta.fai, HEK_CYP2J19_blast_sort.bam, and HEK_CYP2J19_blast_sort.bam.bai to you PC and load them into IGV using CYP2J19.fasta as the "genome".
+
+
+Now we can see where the reads are mapping within this particular transcript and pick out SNPs. You might notice that is redundant with the mapping approaches we have discussed elsewhere. However, magicblast may perform better with error prone sequencing (i.e. nanopore reads) and may offer improved intron detection
 
 
