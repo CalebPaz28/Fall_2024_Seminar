@@ -1,0 +1,233 @@
+---
+title: "Lecture Notes"
+author: "Paslay"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## NSF Review panel (these are some of the main ideas)
+
+Review structure
+- Synopsis of proposal (non-evaluative)
+- Intellectual merit (discuss strengths and weaknesses in seperate sections)
+  - Clearly articulating significance that is linked to broader principles
+  - Reasearch plan (feasible plan), requires clear predictions (very important)
+  
+  
+- Broader impacts (this was an nsf grant on funding regional universities)
+ - The best grants linked the impact on the undergraduates to the research questions
+ - broader impact: public outreach
+ 
+ 
+- Prior NSF support
+- Data management
+- Mentoring plan (for graduate or undergraduate plan)
+ 
+ 
+## Panel discussion
+- 15 minutes
+- Primary presents overview and assessments
+- Secondary adds 2-3 min
+- scribe adds 2-3 min
+- entire panel votes
+ 
+## Ranking categories:
+- Outstanding "must fund"
+- Highly meritorious "should fund"
+- Meritorious "could fund"
+- Not competitive "should not fund"
+
+
+# Eukaryotic genome structure and features
+
+- linear chromosomes made up of DNA and proteins (histone complexes)
+ - Chromatin is the complex of DNA and proteins
+ - histone proteins are positively charged and highly conserved among organisms
+ 
+Nucleosome: histone and DNA (beads on a string)
+
+## Chromatin is dynamic
+- The packing and condensation of chromatin changes with cell cycle stages and transcriptional states. 
+
+- Early genetic work was done on chromosomes using various stains (karyogomy or karyotypes). This was done using Gimsia stain where A-T were stained a darker color and G-C is stained a more pale color.
+
+**Aneuploidy**: abnormal numbers of chromosomes
+
+**Fluorescence in situ hybridization (FISH)** is an important tool for mapping specific sequences to chromosome structure. This helps build a connection between the genetic data and the physical strucutre of the chromosome.
+
+## Metaphase chromosome features
+- Chromatid: One copy of the duplicated chromosome
+- Telomere: Highly repetitive sequence at the end of chromosomes that help prevent degredation
+  - The replication of linear DNA molecules results in progressive shortening of the chromosome
+  - Telomerase extends the chromosome end sequence by reverse transcribing an RNA template with repeating sequence of bases
+  - Telomerase (TERT) may derive from reverse transcriptaases carried by retrotransposons or retroviruses.
+- Centromere: Assembly point for the kinetochore
+  - Cohesin proteins bind and hold the sister chromatids together
+  - millions of bp's long
+  - Repetitive alphoid DNA (arranged head-to-tail arrays in highly-order repeats)
+  - Impossible to resolve with short read sequencing
+  
+2022 paper (complete sequence of human genome)
+
+Complete hydatidiform mole (CHM)
+- non-viable fertilized egg, missing the maternal nucleus
+- Duplication of the paternal complement post-fertilization produces a perfectly homozygous genome. This makes the assembly process much easier.
+- Resolved sequences in the centromere
+- Reveals centromeric sequences are expanding through tandem duplication
+- youngest sequences are those interacting with the kinetochore
+
+## Chromosomal diversity
+- Microchromosomes are < 20Mb in length - birds, fish, and amphibians.
+ - Gene dense
+ 
+- Microchromosomes may be the ancestral state and macrochromosomes are a derived state in mammals. How and why this occurs is still an open questions.
+
+- B Chromosomes
+  - Non-essential, atypical chromosomes
+  - Usually fragments of other chromosomes and may contain genes including rRNAs
+  
+- Holocentric chromosomes (some insects and plants): Multiple centromere-like structures
+- Acrocentric chromosomes: centromere is located near the end of the chromosome
+
+In humans the short arm sequences are highly repetative and high rates of heterologous recombination among chromosomes
+
+rDNA copy numbers highly variable and among populations and individuals
+
+
+## Chromatin state and ATAC-seq
+
+- chromatin is the most "opened" state for gene expression to proceed.
+- Transcription factors bind and can lead to the transcription of the genes (moving histones)
+- tightly condensed is called heterochromatin in transcriptionally inactive
+- Euchromatin is the transcriptionally active form
+
+CTFC sites define topological domains in the genome
+- regulatory interactions occurs within loops.
+- DNA loops in the cohesion ring
+
+
+## 
+
+The surprise of the genome age is that there are not as many coding genes as expected.
+
+### Alternative splicing
+- In humans 20,442 genes -> 78,120 proteins
+- 75% of all human protein coding genes have splice variants
+
+### Pseudogenes
+- Sequence of nucleotides that resemble a genuine gene but which does not specify a functional RNA or protein
+
+  - **Duplicated pseudogenes**: often when gene duplication occurs one member may accumulate mutations and pseudogenize (die out)
+  - **Unitary pseudogene**: single copy gene, true loss-of-function
+  - gulo in Haplorhini primates
+  - **Processed pseudogenes**: reverse transcription and reintegration of mRNA sequence. Most common in human genome.
+  
+
+### Gene distribtuion
+- Genes are unevenly distributed within chromosomes
+- There are gene 'deserts'
+- In humans, protein coding genes make up 48Mb or 1.5% of total sequence
+- Much of the genome (48.5%) is composed of interspersed repeats
+  - Transposon: A genetic element that can move from one position to another in a DNA molecule
+  - Retrotransposition: Transposition via an RNA intermediate
+
+- Long terminal repeats (LTRs)
+  - 8% of human genome and 75% of maize genome
+  - Derive from retroviruses and can encode gag (capsid) and pol (reverse transcriptase) proteins
+  - May produce virus-like particles
+  - Many are 'decayed' with loss of functional mutations in genes
+  - LTR sequences mediate integration
+  
+- Long interspersed nuclear elements (LINEs)
+  - 6kb in length, but many truncated
+  - 20% of the human genome
+  - gag and pol elements, but not LTRs
+  - activation of LINE-1 expression implicated in disease processes
+  
+- Short interspersed nuclear elements (SINEs)
+  - 1.7 million copies in human genome (14%)
+  - Nearly 10% of human genome Alu element
+  - Derive from 7SL RNA genome
+  - Requires other elements (LINEs) for expression and replication
+  - Provide homology across genome and may drive high levels of recombination
+  - effects on gene expression
+  
+- DNA transposons
+  - Most are inactive
+  - More abundant in plants
+  - First described in 1944 by Barbara McClintock
+  
+- Microsatellites
+  - 3% of the human genome
+  - Very short (13bp) tandemly repeated
+  - Produced through polymerase slippage during DNA replication
+  - Highly variable - lengths are different among all individuals
+  - Major mechanism of DNA fingerprinting
+  
+  
+### Syncytins are derived from retroviruses
+- Syncytins are proteins essential for placental development and implantation in mammals
+- Evolved from endogenous retroviral envelope (env) gene
+
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+

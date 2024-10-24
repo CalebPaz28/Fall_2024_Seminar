@@ -1,0 +1,2 @@
+# We can check the alignment statistics using hisat2
+hisat2 -x /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/indexed_genome -1 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_1.fq -2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_2.fq -S /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.sam --summary-file /scratch/biol726310/BIOL7263_Genomics/rrv_project/alignment_summary.txt

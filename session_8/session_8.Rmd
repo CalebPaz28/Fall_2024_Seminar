@@ -3,13 +3,3 @@
 
 [Lecture Notes](lecture_notes.html)
 
-### **Scripts**
-
-[]()
-
-### **Topic**
-1. 
-2. 
-3. 
-4. 
-5. 

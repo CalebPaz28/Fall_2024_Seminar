@@ -1,30 +1,25 @@
 ---
+title: RRV Project Draft
 output: html_document
 ---
 
 ```{r include = FALSE}
 library(rmarkdown)
+library(tidyverse)
 ```
 
-# Purpose 
+# **Purpose**
 
 There are many research projects conducted on vastly different organisms that are not related to virus research. Because the focus on a given research task does not involve the detection or discovery of viruses, this is often overlooked and provides an opportunity for virologists to comb through the data and see if viruses are present. Given that each organism present on plant Earth is estimated to be infected by at least one virus, this provides ample opportunity to discover novel viruses in a host of interest.
 
-Not only is this conceptual, but this as been applied in a variety of hosts. I will speak to viruses from cotton and roses in this case. 
+Not only is this conceptual, but this as been applied in a variety of hosts. I will focus on viruses isolated from roses in this case.
 
-1) In soybean, 
+In roses,
 
-Elmore, M. G., Groves, C. L., Hajimorad, M. R., Stewart, T. P., Gaskill, M. A., Wise, K. A., ... & Whitham, S. A. (2022). Detection and discovery of plant viruses in soybean by metagenomic sequencing. Virology Journal, 19(1), 149. 
-
-- A virus was not found by combing through transcriptome data...
-
-2) In roses, 
-
-Xing, F., Gao, D., Habili, N., Wang, H., Zhang, Z., Cao, M., & Li, S. (2021). Identification and molecular characterization of a novel carlavirus infecting rose plants (Rosa chinensis Jacq.). Archives of Virology, 166, 3499-3502.
+Xing, F., Gao, D., Habili, N., Wang, H., Zhang, Z., Cao, M., & Li, S. (<mark>2021</mark>). Identification and molecular characterization of a novel carlavirus infecting rose plants (Rosa chinensis Jacq.). Archives of Virology, 166, 3499-3502.
 
 - RVC was found by looking through transcriptome data
 - This can help in the future as growers and diagnosticians decide which viruses they should screen for.
-
 
 # **Exploring RNA-seq data for the presence of unreported or novel viruses in the genus *Rosa* **
 
@@ -60,57 +55,47 @@ ssh [YOUR_ACCOUNT_ID]@schooner.oscer.ou.edu
 mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
 ```
 
-3. We can include this line of code in our script.
+3. Submit a job to OSCER
+
+```bach
+sbatch /scratch/biol726310/BIOL7263_Genomics/rrv_project/scripts/[file_name.sbatch]
+```
+
+4. Check on a job
+
+```bach
+squeue -u biol726310
+```
+
+5. We can include this line of code in our script.
 
 ```bach
 module load SRA-Toolkit/3.0.3-gompi-2022a
 ```
 
-4. The following code is our **[sbatch](scripts/fastq_dump.sbatch)** file and contains the `array` argument. This must be alter according to the number of individual jobs being submitted.  
+6. The following code is our `.sbatch` file and contains the `array` argument. This must be altered according to the number of individual jobs being submitted.  
 
-```bach
-#!/bin/bash
-#
-#SBATCH --partition=normal
-#SBATCH --ntasks=1
-#SBATCH --mem 16G
-#SBATCH --output=dump_sort_%J_stdout.txt
-#SBATCH --error=dump_sort_%J_stderr.txt
-#SBATCH --job-name=dump_sort
-#SBATCH --array=1-3
-# 
+Below are the files submitted to OSCER:
 
-bash /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.sh $(sed -n "${SLURM_ARRAY_TASK_ID}p" /home/biol726310/BIOL7263_Genomics/rrv_project/fastq_dump.args)
-```
+1) **[sbatch file](scripts/fastq_dump.sbatch)** 
 
-5. Here is our **[script](scripts/fastq_dump.sh)** file which contains a line of code that specifies a loading of the SRA-Toolkit. This program will be used to obtain data associated with a specific accession. 
+2) **[sh script](scripts/fastq_dump.sh)**
 
-```bach
-module load SRA-Toolkit/3.0.3-gompi-2022a
+3) **[.args](scripts/fastq_dump.args)**
 
-fastq-dump --split-files $1 -O /scratch/biol726310/BIOL7263_Genomics/rrv_project
-```
+7. Here is our `.sh` script file which contains a line of code that specifies a loading of the SRA-Toolkit. This program will be used to obtain data associated with a specific accessions.
 
-6. Lastly, we have a **[.args](scripts/fastq_dump.args)** file which contains a list of information that will be run using the array system.
+8. Lastly, we have a `.args` file which contains a list of information that will be run using the array system.
 
-```bach
-SRR29872021
-SRR29872022
-SRR29872023
-SRR29872030
-SRR29872031
-SRR29872032
-SRR29872049
-```
+In this case, we set the array argument to `1-3`. This means, the array will only process the first three arguments in the `.args` file.
 
 *___________________________________________________________________________________________________*
 
 ### **2. Downloading the Reference genome of interest**
 
-In this case, we will use the **Rosa____** genome as a reference. This reference corresponds with the RNA-seq data downloaded in the previous section.
+In this case, we will use the **Rosa** genome as a reference. This reference corresponds with the RNA-seq data downloaded in the previous section.
 
-
-We can manually do this, or download using the `wget` and the respective link. Below is from our class exercises
+We can manually download the data of interest, or download using the `wget` command and the respective link. Below is from our class exercises.
 
 Steps:
 1. Go to NCBI 
@@ -120,25 +105,17 @@ Steps:
 5. Copy link for file of interest (in our case, we will copy the link for the genomic.fna.gz, we may also want to grab the genomic.gff.gz) 
 
 
-```bach
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.fna.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome
+1) **[sh script](scripts/rose_reference.sh)**
 
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/994/745/GCA_002994745.2_RchiOBHm-V2/GCA_002994745.2_RchiOBHm-V2_genomic.gff.gz -P /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome
-```
+2) **[sbatch file](scripts/rose_reference.sbatch)** 
 
-Once these are downloaded, we will likely need to unzip them for further analysis. In this case, we will use an `gunzip` command.
-
-```bach
-gunzip /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/*.gz
-```
+Once these are downloaded, we will likely need to unzip them for further analysis. In this case, we will use an `gunzip` command, which we have incorporated into the above script.
 
 ### **3. QC and trimming of raw data**
 
-As part of the analysis, it is important to consider the quality of the reads being analyzed. This is publicly available data, therefore, I assume the data is of high quality (otherwise, why publish?). Eitherway, we will still work through the process of data quality control and trimming of the raw fastq files (for sake of practice and understanding).
-
+As part of the analysis, it is important to consider the quality of the reads being analyzed. This is publicly available data, therefore, I assume the data is of high quality (otherwise, why publish?). Either way, we will still work through the process of data quality control and trimming of the raw fastq files (for sake of practice and understanding).
 
 To view the first few headers we can use the `zcat` command (this is similar to 'cat' but works with zipped files). We can also use `head` and `tail` to look at the data. So in the case that our file is NOT zipped, we will use `cat`, otherwise we will use `zcat`.
-
 
 ```bach
 cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq | head | grep @SRR
@@ -151,53 +128,45 @@ Check that there is an identical number of reads in each file (this one is not w
 cat /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq | grep @SRR | wc –l
 ```
 
-From our class exercises: We will need to create an **[sbatch file](scripts/rose_fastqc.sbatch)** and **[sh script](scripts/rose_fastqc.sh)** with our code. Generally anything with a median quality score greater than Q20 is regarded as acceptable; anything above Q30 is regarded as 'good'.
+From our class exercises: We will need to create `.sh` and `.sbatch` files with our code. Generally anything with a median quality score greater than Q20 is regarded as acceptable; anything above Q30 is regarded as 'good'.
 
-```bach
-fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_1.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
+Below are the files submitted to OSCER:
 
-fastqc /scratch/biol726310/BIOL7263_Genomics/rrv_project/SRR29872023_2.fastq -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/
-```
+1) **[sbatch file](scripts/rose_fastqc.sbatch)** 
 
-Submit the job
+2) **[sh script](scripts/rose_fastqc.sh)**
 
-```bach
-sbatch /scratch/biol726310/BIOL7263_Genomics/rrv_project/scripts/rose_fastqc.sbatch
-```
+Here we are only looking at one sample, which is `SRR29872023_1` and `SRR29872023_2`. If we wanted to use an array system, we could look at all of the files and have `fastqc` run for each of them.
 
-Check on job
+> If I complete the main project, I will use an array at this step (likely other steps downstream) to process a larger number of samples.
 
-```bach
-squeue -u biol726310
-```
-
-#### **Results of the quality control**
+#### **Results of the quality control using fastqc**
 
 <iframe src="data_output/SRR29872023_1_fastqc.html" width="100%" height="600px"></iframe>
 
-
 <iframe src="data_output/SRR29872023_2_fastqc.html" width="100%" height="600px"></iframe>
 
+### **Trimming**
 
-We need to include the trimming files (this will need to be modified according the the output files generated)
-
-```bach
-trim_galore --paired --fastqc --gzip --cores 4 --length 100 /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_1.fastq.gz /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/SRR491287_2.fastq.gz --basename trimmed_reads -o /scratch/biol726310/BIOL7263_Genomics/pseudomonas_gm41/trimming
-```
+We will create a new directory where we can store the trimmed data and simply call it `trimmed_data`.
 
 ```bach
-#!/bin/bash
-#
-#SBATCH --partition=normal
-#SBATCH --ntasks=1
-#SBATCH --mem 16G
-#SBATCH --output=trim_galore_%J_stdout.txt
-#SBATCH --error=trim_galore_%J_stderr.txt
-#SBATCH --job-name=trim_galore
-# 
-
-bash /home/biol726310/BIOL7263_Genomics/pseudomonas_gm41/scripts/trim_galore.sh
+mkdir /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data
 ```
+
+We will now create the script that we can use to initate the trimming program.
+
+Below are the files submitted to OSCER:
+
+1) **[sh script](scripts/rose_trimming.sh)** 
+
+2) **[sbatch file](scripts/rose_trimming.sbatch)**
+
+
+<iframe src="data_output/trimmed_reads_val_1_fastqc.html" width="100%" height="600px"></iframe>
+
+<iframe src="data_output/trimmed_reads_val_2_fastqc.html" width="100%" height="600px"></iframe>
+
 
 *___________________________________________________________________________________________________*
 
@@ -224,46 +193,224 @@ The below code is from Salil:
 conda create -n hisat2_env
 ```
 
-2. Install a program of interest (hisat2)
-```bach
-conda install hisat2
-```
-
-3. activate the environment
+2. activate the environment
 ```bach
 conda activate hisat2_env
 ```
 
+> `mamba` can also be used instead of `conda`
 
-4. unzip the file of interest
+3. We will likely have to configure the channels that will be required for package installation.
+
 ```bach
-gunzip [file of interest]
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --add channels defaults
 ```
 
-5. create an index file 
+4. We can check the channels with the following commands. The order is important
+
 ```bach
-hisat2-build [path to reference genome]
+conda config --show channels
 ```
 
-6. Aligning reads to the index of the reference genome
+5. Install a program of interest (hisat2)
 ```bach
-hisat2 -x 
+conda install hisat2
+```
+
+6. unzip the file of interest
+```bach
+gunzip [file of interest, usually *.gz]
+```
+
+7. create an index file
+```bach
+hisat2-build /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/GCA_002994745.2_RchiOBHm-V2_genomic.fna /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/indexed_genome
+```
+
+8. Aligning reads to the indexed reference genome
+
+```bach
+hisat2 -x /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/indexed_genome -1 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_1.fq.gz -2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_2.fq.gz -S /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.sam
+```
+
+Generic form of the command.
+
+```bach
+hisat2 -x indexed_genome -1 reads_1.fastq -2 reads_2.fastq -S output.sam
+```
+`-x index_basename`: The name of the genome index files (from the indexing step).
+`-1 reads_1.fastq`: The file containing the first reads of the paired-end data (these might have to be decompressed or `gunzipped`).
+`-2 reads_2.fastq`: The file containing the second reads of the paired-end data (these might have to be decompressed or `gunzipped`).
+`-S output.sam`: The name of the output file in SAM format.
+`--dta`: This option enables HISAT2 to output alignments tailored for transcript assembly with tools like StringTie.
+`--threads`: Specifies the number of threads to use for faster alignment:
+
+Below I have included the script file for the `hisat2` mapping. 
+
+1) **[sh script](scripts/hisat_mapping.sh)** 
+
+2) **[sbatch file](scripts/hisat_mapping.sbatch)**
+
+We will need to deactivate the current environment and activate the class environment to finish the remaining steps.
+
+Activate environment
+
+```bach
+mamba deactivate
+```
+
+```bach
+mamba activate /home/mbtoomey/.conda/envs/BIOL7263_Genomics
+```
+
+9. Convert the `.SAM` to `.BAM`
+
+```bach
+samtools view -S -b /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.sam > /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.bam
+```
+
+`-S`: Indicates that the input is in SAM format.
+`-b`: Specifies that the output should be in BAM format.
+
+10. Sorting the `.BAM` file.
+
+```bach
+samtools sort /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.bam -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/sorted_hisat2.bam
+```
+
+11. Indexing the `.BAM` file
+
+Indexing the sorted BAM file allows fast access for viewing alignments or further processing (e.g., in tools like IGV or featureCounts).
+
+```bach
+samtools index /scratch/biol726310/BIOL7263_Genomics/rrv_project/sorted_hisat2.bam
+```
+
+12. We can check the alignment statistics using a few tools.
+
+```bach
+samtools flagstat /scratch/biol726310/BIOL7263_Genomics/rrv_project/sorted_hisat2.bam > /scratch/biol726310/BIOL7263_Genomics/rrv_project/mappingstats.txt
+```
+
+> This worked well (very fast also)!
+
+```{r fig.cap="Looking at the mapping stats generated by smatools"}
+# Specify the path to your text file
+file_path <- "data_output/mappingstats.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, 30), sep = "\n")
 ```
 
 
+We can also use the qualimap program to check the alignment.
 
+```bach
+qualimap bamqc -outdir /scratch/biol726310/BIOL7263_Genomics/rrv_project/bamqc -bam /scratch/biol726310/BIOL7263_Genomics/rrv_project/sorted_hisat2.bam -gff /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/GCA_002994745.2_RchiOBHm-V2_genomic.gff
+```
+
+> Works well (slow processing)
+
+```{r fig.cap="Looking at the mapping stats generated by smatools"}
+# Specify the path to your text file
+file_path <- "data_output/genome_results.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, 30), sep = "\n")
+```
+
+The following code has been added to a script file that contains all of the steps in one document. The comments need to be removed, but the code can be run multiple lines at a time (the only problem is the use of different environments, otherwise, we could run it all together).
+
+1) **[sh script](scripts/sam_bam_sort_in.sh)** 
+
+2) **[sbatch file](scripts/sam_bam_sort_in.sbatch)**
+
+- Because we are using two different environments, I will have to change environments after this step. (If I created an environment with all of the programs in one, I could easily use the same environment for all the anlayses).
+
+```bach
+mamba deactivate
+```
+
+```
+mamba activate hisat2_env
+```
+Generic formula for the data input.
+
+```bach
+hisat2 -x genome_index -1 sample_1.fastq -2 sample_2.fastq -S alignment.sam --summary-file alignment_summary.txt
+```
+
+```bach
+hisat2 -x /scratch/biol726310/BIOL7263_Genomics/rrv_project/reference_genome/indexed_genome -1 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_1.fq -2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/trimmed_data/trimmed_reads_val_2.fq -S /scratch/biol726310/BIOL7263_Genomics/rrv_project/hisat2.sam --summary-file /scratch/biol726310/BIOL7263_Genomics/rrv_project/alignment_summary.txt
+```
+> Works well (very slow processing)!
+
+```{r fig.cap="Looking at the mapping stats generated by smatools"}
+# Specify the path to your text file
+file_path <- "data_output/alignment_summary.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, 30), sep = "\n")
+```
+
+Below I have included the files for OSCER submission. The `hisat2` version for checking the alignment works very similar to the `qualimap` alignment check.
+
+
+1) **[sh script](scripts/hisat_alignment_sum.sh)** 
+
+2) **[sbatch file](scripts/hisat_alignment_sum.sbatch)**
 
 *___________________________________________________________________________________________________*
 
 
 ### **5. Gather unmapped reads using the flags**
 
+We will start by creating a new directory to store the unmapped reads.
+
+```bach
+mkdir unmapped
+```
+
+We need to first extract the unmapped reads from the file
+
+```bach
+samtools view -b -f 12 /scratch/biol726310/BIOL7263_Genomics/rrv_project/sorted_hisat2.bam -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped.bam
+```
+
+> Apparently, according to other sources, the `-f` argument should be `4` instead of `12` when considering an unpaired read. The argument `12` is used to obtain unmapped reads from both pairs.
 
 
+We will need to then convert the unmapped reads back to a fastq format so that the SPAdes assembler can read the input file. We can convert `.BAM` to fastq using bedtools or samtools.
 
+```bach
+bedtools bamtofastq -i /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped.bam -fq /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/unmapped_r1.fastq -fq2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/unmapped_r2.fastq
+```
 
+> This worked very well.
 
-- We may have to convert the SAM to a fastq file for assembly
+```bach
+# Convert the .BAM file to a format (using samtools) that can be read by SPAdes such as fastq
+samtools fastq /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/unmapped.bam -1 /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/output_1.fastq -2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/output_2.fastq
+```
+
+> This worked very well.
+
+I was able to use both tools (bedtools and samtools) to generate fastq files. Below are the documents submitted to OSCER:
+
+1) **[sh script](scripts/unmapped_reads.sh)** 
+
+2) **[sbatch file](scripts/unmapped_reads.sbatch)**
 
 
 *___________________________________________________________________________________________________*
@@ -271,20 +418,50 @@ hisat2 -x
 
 ### **6. Assembly of unmapped reads (rnaSPADES)**
 
+First we will make a directory to contain our assembly data.
+
 ```bach
-spades.py --rna -t 20 -m 60 -o spades_assembly -1 trimmed_reads_val_1.fq.gz -2 trimmed_reads_val_2.fq.gz
+mkdir assembly
 ```
 
+```bach
+spades.py --rna --threads 24 -o /scratch/biol726310/BIOL7263_Genomics/rrv_project/assembly/spades_assembly -1 /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/output_1.fastq -2 /scratch/biol726310/BIOL7263_Genomics/rrv_project/unmapped/output_2.fastq
+```
+
+Apparently, we can process multiple fastq files in one assembly step. This may be useful down to the road. Otherwise, we may use the array system.
+
+```bach
+spades.py --rna --threads 24 -o output_directory -1 reads_1_1.fastq.gz -2 reads_1_2.fastq.gz -1 reads_2_1.fastq.gz -2 reads_2_2.fastq.gz
+```
+
+Check how the assembly went using QUAST.
+
+```bach
+quast.py --output-dir /scratch/biol726310/BIOL7263_Genomics/rrv_project/assembly/spades_assembly/quast /scratch/biol726310/BIOL7263_Genomics/rrv_project/assembly/spades_assembly/transcripts.fasta
+```
+
+```{r fig.cap="Looking at the mapping stats generated by smatools"}
+# Specify the path to your text file
+file_path <- "data_output/quast_report.txt"
+
+# Read the text file
+text_content <- readLines(file_path)
+
+# Print the content of the text file
+cat(head(text_content, 30), sep = "\n")
+```
+
+1) **[sh script](scripts/assembly_quast.sh)**
+
+2) **[sbatch file](scripts/assembly_quast.sbatch)**
 
 *___________________________________________________________________________________________________*
 
-
 ### **7. Create a database of viruses (using the taxa accession or ID) so that BLAST can be run locally**
 
+#### Nucleotide BLAST
 
-#### BLAST
-
-Diamond only allows for searches of a protein database. To search a nucleotide database we can use the blast+ suite of tools. This is the exact same tool that is used for online blast searches. However, when we implement it on our system we will need to provide a search database. The blast+ suit includes a script to download the preconfigured databases from NCBI: [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK569850/)
+To search a nucleotide database we can use the blast+ suite of tools. This is the exact same tool that is used for online blast searches. However, when we implement it on our system we will need to provide a search database. The blast+ suit includes a script to download the preconfigured databases from NCBI: [BLAST](https://www.ncbi.nlm.nih.gov/books/NBK569850/)
 
 We will likely have to navigate to the directory where we plan to create the databases.
 
@@ -298,56 +475,60 @@ update_blastdb.pl --showall
 update_blastdb.pl --decompress [DATABASE NAME]
 ```
 
-We will need to make a script for this database download.
-
 ```bach
 update_blastdb.pl --decompress nt_viruses
 ```
-*core_nt* is the default database used in online blast searches, but is >160Gb. This is not feasible for our searches. We can download the *nt_viruses* or *nt_prok* databases, which are much smaller in relative size. The *nt_euk* is very much impractically large.
 
+It may be required to unzip the previous file.
+
+```
+tar -xvzf nt_viruses.00.tar.gz
+```
+
+*core_nt* is the default database used in online blast searches, but is >160Gb. This is not feasible for our searches. We can download the *nt_viruses* or *nt_prok* databases, which are much smaller in relative size. The *nt_euk* is very much impractically large.
 
 We can create a smaller database that contains certain viruses to reduce the search time. We also may be interested in fungi, bacteria, phytoplasma, etc.
 
-
-In this example, we are downloading all of the RNA from the NCBI human reference genome ( GCF_000001405.40_GRCh38.p14_rna.fna.gz). We can use this as our current database.
-
+Rather than relying on the above process (which were difficult to integrate), I simply downloaded nucleotide sequences manually for all viruses using NCBI.
 
 ```bach
 makeblastdb -in human_RNA.fna -parse_seqids -blastdb_version 5 -title "Human RNA" -dbtype nucl -out human_rna_db
 ```
 
+Now that we have generated the nucleotide database, we can use the `blastn` command to search the database for homologous sequences.
+
+```bach
+blastn -db /scratch/biol726310/BIOL7263_Genomics/rrv_project/databases/virus_db -query transcripts.fasta -outfmt "6 qseqid sseqid stitle" -num_threads 20 -num_alignments 1 > TTC_rna_blast.tsv
+```
+
+In the following code, I have written it in such a way as to generate a csv file that can be analyzed easily.
+
+```bach
+blastn -query query.fasta -db /scratch/biol726310/BIOL7263_Genomics/rrv_project/databases/virus_db -out results.csv -evalue 1e-5 -max_target_seqs 5 -num_threads 4 -outfmt "10 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore"
+```
+
+`qseqid`: Query sequence ID.
+`sseqid`: Subject (database) sequence ID.
+`pident`: Percentage of identical matches.
+`length`: Alignment length.
+`mismatch`: Number of mismatches.
+`gapopen`: Number of gap openings.
+`qstart`: Start of alignment in the query.
+`qend`: End of alignment in the query.
+`sstart`: Start of alignment in the subject (database).
+`send`: End of alignment in the subject.
+`evalue`: Expect value (E-value).
+`bitscore`: Bit score.
 
 *___________________________________________________________________________________________________*
 
+### **8. Use Diamond for blasting against protein sequences (like BLASTx)**
 
-### **8. Use Diamond for blasting against protein sequences (requires protein sequences: translate the nucleic acid to protein)**
+We will use Diamond to run efficient blast searches of databases. Similar to the nucleotide database, we are going to build our own database for this search. To do this lets go to the Uniprotkb database and download all of the protein sequences for our organisms of interest.
 
-To do this we will compare them to known or annotated proteins in other bird species. We will use Diamond to run efficient blast searches of databases.
+We can download the sequences as fasta files to construct our database. We can download from uniprotkb or NCBI.
 
-We are going to build our own database for this search. To do this lets go to the Uniprotkb database and download all of the protein sequences for chicken and zebra finch, two well annotated species.
-
-We can download the sequences as fasta files to construct our database. We can download from uniprotkb or NCBI. 
-
-Here is the general command:
-
-```bach
-diamond makedb --in input_sequences.fasta -d database_name
-```
-
-Here is the taxon ID for viruses 10239. It appears that we will have to manually download fasta sequences from NCBI or Uniprotkb and then use that for protein blasting.
-
-I was able to generate a link from the Uniprotkb website that will download all of the protein seqeunces using the link (rather than downloading manually)
-
-> I have not yet tried this link. I should probably create a script for this rather than using the login node.
-
-wget --header='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' "https://rest.uniprot.org/uniprotkb/stream?compressed=true&format=fasta&query=%2810239%29"
-
-
-This method appears to work, but I have not completed the download process.
-
-```bach
-wget --header='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' "https://rest.uniprot.org/uniprotkb/stream?format=fasta&query=%2810239%29"
-```
+Here is the taxon ID for viruses 10239. I was able to generate a link from the Uniprotkb website that will download all of the protein sequences using the link (rather than downloading manually).
 
 Below I have included my files for OSCER submission:
 
@@ -355,33 +536,24 @@ Below I have included my files for OSCER submission:
 
 2) **[.sbatch file](scripts/protein_db_download.sbatch)**
 
-
-This is how we can join two databases (more than one organism of interest)
+This is how we can join two databases (more than one organism of interest). We can join the data set, and then create the database using the below code.
 
 ```bach
 cat ZeFi_proteins.fasta chicken_proteins.fasta > bird_proteins.fasta
 ```
 
-```bach
-diamond makedb --in bird_proteins.fasta -d bird_proteins
-```
+Here is the command for building the database. This step is critical as it will generate the `.dmnd` formatted file.
 
 ```bach
-diamond blastp --threads 8 --outfmt 6 -k 1 -d bird_proteins.dmnd -q HoLa_scaffold_123.aa -o HoLa_blastp.tsv
+diamond makedb --in /scratch/biol726310/BIOL7263_Genomics/rrv_project/databases/protein_db/all_virus_protein -d /scratch/biol726310/BIOL7263_Genomics/rrv_project/databases/protein_db/virus_protein_db
 ```
 
--d sets the path to our database.
--k limits the output to the top hit only.
--q sets the path to our query sequences from the genome
--o sets the name of the output file
---threads sets the number of cpu cores to use for the anlysis. Remember to match this in the .sbatch file.
---outfmt 6 sets the output to a table.
-
-Similar to above, we download the human proteins from Uniprotkb. Now we need to transform this file into a database that diamond can use for our blast search:
-
-```bach
-diamond makedb --in human_proteins.fasta -d human_proteins
-```
+`-d` sets the path to our database.
+`-k` limits the output to the top hit only.
+`-q` sets the path to our query sequences from the genome
+`-o` sets the name of the output file
+`--threads` sets the number of cpu cores to use for the anlysis. Remember to match this in the .sbatch file.
+`--outfmt 6` sets the output to a table.
 
 Now we can run the blast search, however this time we will be searching RNA transcripts against a protein database. Therefore, we will use the blastx search option in diamond.
 
@@ -389,30 +561,118 @@ Now we can run the blast search, however this time we will be searching RNA tran
 diamond blastx --threads 8 --outfmt 6 qseqid sseqid length pident evalue stitle -k 1 -d human_proteins.dmnd -q transcripts.fasta -o HEK_blastx.tsv
 ```
 
-*___________________________________________________________________________________________________*
-
-
-### **9. Accumulate BLAST results for both nucleotide and protein blast**
+The following code is supposed to generate a `.csv` file type that will be much easier to analyze and can be quickly summarized.
 
 ```bach
-/home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db
+diamond blastx -d /scratch/biol726310/BIOL7263_Genomics/rrv_project/databases/protein_db -q query.fasta --outfmt 6 qseqid sseqid stitle pident length mismatch gapopen qstart qend sstart send evalue bitscore --max-target-seqs 5 --threads 8 | sed 's/\t/,/g' > results.csv
 ```
 
-```bach
-blastn -db /home/mbtoomey/BIOL7263_Genomics/Example_data/blastdb/human_rna_db -query transcripts.fasta -outfmt "6 qseqid sseqid stitle" -num_threads 20 -num_alignments 1 > TTC_rna_blast.tsv
-```
+Below I have included my files for OSCER submission:
 
-Now download and compare the results of the diamond protein search HEK_blastx.tsv to the blastn nucleotide search HEK_blastn.tsv. You will notice they are similar, but not identical. The blastn search identified more of the de novo transcripts as you might expect since this database contains non-coding RNAs and non-coding protions of the transcript sequences. Thus, a nucleotide-based search my be better, but keep in mind that nucleotide sequences are mush less conserved than protein sequences. If you are comparing to a database from a distantly releated taxa, the blastx protein search may be more reliable.
+> These files include both nucleotide and diamond blast searches on the same file. This makes it easier to simply run one job and get both results as output.
 
+1) **[.sh script](scripts/nt_protein_blast.sh)** 
+
+2) **[.sbatch file](scripts/nt_protein_blast.sbatch)**
 
 *___________________________________________________________________________________________________*
 
-
-### **10. Analyze results**
+### **9. Accumulate and analyze BLAST results for both nucleotide and protein blast**
 
 - I would like to see if I can create a .csv output so that I can quickly evaluate the data generated by using R. If I am able to write a script that quickly generates the important information, I can easily render a document that summarizes our findings.
 
 - We will also need to include the coverage depth, and other information related to whether we can trust the results or not.
+
+```{r}
+protein_df <- read.csv("data_output/diamond_results.csv", header = FALSE)
+
+colnames(protein_df) <- c("Query_ID","Seq_Title", "Percent_ID", "Align_Length", "Mismatch", "Gap_Open", "Query_Start", "Query_End", "Seq_Start","Send", "Evalue", "bitscore")
+
+
+df_split <- protein_df %>% 
+  mutate(NODE = str_extract(Query_ID,"NODE_[0-9]+"),
+         LENGTH = 
+str_extract(Query_ID, "length_[0-9]+"),
+         COV = 
+str_extract(Query_ID, "cov_[0-9]+\\.[0-9]+"))
+
+
+df_cleaned <- df_split %>% 
+  mutate(
+    NODE = gsub("NODE_", "", NODE),      # Remove NODE_ prefix
+    LENGTH = gsub("length_", "", LENGTH), # Remove length_ prefix
+    COV = gsub("cov_", "", COV))           # Remove cov_ prefix
+
+
+## Cleaning up the sequence title by extracting the OS portion
+df_cleaned <- df_cleaned %>% 
+  mutate(Seq_Title_Org = str_extract(Seq_Title, "OS=([^O]+)"))
+
+
+df_complete <- df_cleaned %>%
+  select("Seq_Title_Org","NODE","LENGTH","COV","Percent_ID","Align_Length","Mismatch","Gap_Open","Evalue")
+
+## Changing the variable type of one variable
+df_complete$NODE <- as.numeric(df_complete$NODE)
+df_complete$LENGTH <- as.numeric(df_complete$LENGTH)
+df_complete$COV <- as.numeric(df_complete$COV)
+df_complete$Percent_ID <- as.numeric(df_complete$Percent_ID)
+df_complete$Align_Length <- as.numeric(df_complete$Align_Length)
+df_complete$Mismatch <- as.numeric(df_complete$Mismatch)
+df_complete$Gap_Open <- as.numeric(df_complete$Gap_Open)
+
+summary(df_complete)
+```
+
+> Now we can look at the data obtained from the search. We can look at a couple of parameters such as the coverage, percent ID, 
+
+```{r, eval=FALSE}
+df_complete %>% arrange(desc(LENGTH))
+
+df_complete %>% arrange(desc(COV))
+
+df_complete %>% arrange(desc(Percent_ID))
+
+df_complete %>% arrange(desc(Align_Length))
+
+df_complete %>% arrange(Mismatch)
+```
+
+We can filter by a specific observations. This is a very useful tool, as we can obtain all of the nodes (contigs) that correspond to a given virus or other organism.
+
+```{r}
+df_complete %>% filter(Seq_Title_Org == "OS=Rose partitivirus ") ## Because of the manipulations 
+```
+
+
+
+
+
+We can reduce the data set so that we can easily manage the analysis of the different sequence hits. In this case, we reduced the data set to one sequence hit per node (using the percent identity as a variable that would dictate the selection of a specific node). Obviously, we could have this from the start when doing the initial diamond blast, but its nice to also see some of the other items that could possibly have homologous sequences.
+
+```{r eval=FALSE}
+reduced_data <- df_complete %>%
+    group_by(NODE) %>%
+    slice_max(Percent_ID, n = 1, with_ties = TRUE) %>%
+    ungroup()  # Remove the grouping structure
+
+
+reduced_data %>% arrange(desc(COV))
+
+reduced_data %>% arrange(desc(Percent_ID))
+
+reduced_data %>% filter(COV >= 10) %>% 
+  arrange(desc(Percent_ID))
+```
+
+
+*___________________________________________________________________________________________________*
+
+> Ideally, it would be nice to generate a master document with most of the programs so that we can input a raw HTS sequence, and end with blast results. Realistically, I think we can break up the data processing into two main steps 1) Fastqc, trimming, and reference mapping 2) Assembly, Quast, Diamond, and blast_n
+
+
+
+
 
 
 

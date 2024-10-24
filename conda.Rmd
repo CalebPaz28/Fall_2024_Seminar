@@ -1,0 +1,114 @@
+---
+title: "Working with Conda"
+author: "Paslay"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document provides some information related to installing Andaconda (package manager) as well as, key information for installing packages to the environment and activating the environment.
+
+This will make sure that conda is properly installed.
+
+```bach
+conda install anaconda-client
+
+anaconda login
+
+anaconda --help
+
+anaconda config --show
+```
+
+
+
+
+
+
+```bach
+conda --version
+```
+
+```bach
+conda update conda
+```
+
+```bach
+conda install anaconda::conda
+```
+
+```bach
+conda install mamba -n base -c conda-forge
+```
+
+
+
+
+This will tell us what we have in our environment.
+
+```bach
+conda env list
+```
+
+We will always start in the `base` environment. We can create new environments for running various tasks.
+
+```bach
+conda create --name bio_pack
+```
+
+Now that we have created an environment, we can activate the environment for use.
+
+```bach
+conda activate bio_pack
+```
+
+To deactivate a current package, simply use the `deactivate` command.
+
+```bach
+conda deactivate
+```
+
+We will likely have to configure the channels that will be required for package installation.
+
+```bach
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+```
+
+We can check the channels with the following commands. The order is important
+
+```bach
+conda config --show channels
+```
+
+```bach
+conda install -c bioconda samtools --strict-channel-priority
+```
+
+
+Once we are in the environment, we can use `install` code to install all kinds of packages.
+
+
+```bach
+conda install -c bioconda hisat2
+```
+
+```bach
+conda install -c bioconda samtools=1.21
+```
+
+
+
+Clean up and old cached package information. 
+
+```bach
+conda clean --all
+```
+
+
+
+

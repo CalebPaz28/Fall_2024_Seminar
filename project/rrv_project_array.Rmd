@@ -1,0 +1,131 @@
+---
+title: "rrv_project_array"
+author: "Paslay"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preliminary steps
+
+- We can start by creating all of the directories needed throughout the downstream process.
+  1. Reference genomes
+  2. Trimming
+  3. Alignment (BWA or hisat2)
+  4. 
+  
+  
+- As a reminder, we may have to change environments throughout the process.
+
+```bach
+mkdir 
+
+mkdir unmapped
+mkdir assembly
+```
+
+## Pulling data from the SRA
+
+Below are the files submitted to OSCER:
+
+1) **[sbatch file](scripts/fastq_dump.sbatch)** 
+
+2) **[sh script](scripts/fastq_dump.sh)**
+
+3) **[.args](scripts/fastq_dump.args)**
+
+
+## Obtaining a reference genome (*Rosa*)
+
+1) **[sh script](scripts/rose_reference.sh)**
+
+2) **[sbatch file](scripts/rose_reference.sbatch)**
+
+
+We will likely need to use `gunzip` to decompress the files
+
+## Quality control using fastqc (before trimming)
+
+1) **[sbatch file](scripts/rose_fastqc.sbatch)** 
+
+2) **[sh script](scripts/rose_fastqc.sh)**
+
+## Trimming
+
+1) **[sh script](scripts/rose_trimming.sh)** 
+
+2) **[sbatch file](scripts/rose_trimming.sbatch)**
+
+
+## Reference mapping of reads to host genome
+
+Below I have included the script file for the `hisat2` mapping. This will require a change of the environment.
+
+```bach
+conda deactivate
+conda activate hisat2_env
+```
+
+1) **[sh script](scripts/hisat_mapping.sh)** 
+
+2) **[sbatch file](scripts/hisat_mapping.sbatch)**
+
+
+- create an index file
+- Aligning reads to the indexed reference genome
+
+
+## Reference mapping of reads to host genome
+
+Convert the `.SAM` to `.BAM`
+Sorting the `.BAM` file
+Indexing the `.BAM` file
+
+
+## We can check the alignment statistics using a few samtools and qualimap
+
+
+1) **[sh script](scripts/sam_bam_sort_in.sh)** 
+
+2) **[sbatch file](scripts/sam_bam_sort_in.sbatch)**
+
+
+
+## Gather unmapped reads using the flags
+
+I was able to use both tools (bedtools and samtools) to generate fastq files. Below are the documents submitted to OSCER:
+
+1) **[sh script](scripts/unmapped_reads.sh)** 
+
+2) **[sbatch file](scripts/unmapped_reads.sbatch)**
+
+
+## Assembly of unmapped reads (rnaSPADES)
+
+1) **[sh script](scripts/assembly_quast.sh)**
+
+2) **[sbatch file](scripts/assembly_quast.sbatch)**
+
+
+## Constructing databases for BLASTn and Diamond
+
+1) **[.sh script](scripts/protein_db_download.sh)** 
+
+2) **[.sbatch file](scripts/protein_db_download.sbatch)**
+
+I may have to use the `mkdb` commands seperately.
+
+
+## Blasting
+
+1) **[.sh script](scripts/nt_protein_blast.sh)** 
+
+2) **[.sbatch file](scripts/nt_protein_blast.sbatch)**
+
+
+## Accumulate and analyze BLAST results for both nucleotide and protein blast
+
+
